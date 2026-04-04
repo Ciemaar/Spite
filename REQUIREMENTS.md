@@ -35,7 +35,7 @@ As a developer, I want to provide Spite with a GitHub repository URL and instruc
 ### 4.2 Delivery Mechanisms
 #### Delivery Option 1: Zip Archive
 -   Package the generated markdown files (`REQUIREMENTS.md`, `TESTING.md`, `IMPLEMENTATION_PLAN.md`, `AGENT_INSTRUCTIONS.md`) into a structured `.zip` archive.
--   Provide the zip file for download via the web interface.
+-   Provide the zip file for saving via a desktop file dialog.
 
 #### Delivery Option 2: Local Git Working Directory
 -   Initialize a new, empty Git repository in a local temporary directory.
@@ -48,14 +48,14 @@ As a developer, I want to provide Spite with a GitHub repository URL and instruc
 -   **Ollama (Primary):** Integrate with a locally running Ollama instance via its REST API. Allow the user to specify the model name (e.g., `llama3`, `qwen2.5-coder`).
 -   **Cloud Providers (Secondary):** Support user-provided API keys for OpenAI (GPT-4o) and Anthropic (Claude 3.5 Sonnet) as fallback or premium options.
 
-### 4.4 Web Interface (HTMX + Python Backend)
--   **Backend:** A lightweight Python web framework (e.g., FastAPI or Flask).
--   **Frontend:** A clean, professional, fast UI built with HTMX and Tailwind CSS (or similar minimal CSS framework).
+### 4.4 Desktop Interface (Python GUI)
+-   **Core App:** The main logic loop running independent of the UI thread.
+-   **GUI Frontend:** A clean, professional UI built with a Python GUI framework (e.g., PyQt6, PySide6, or CustomTkinter).
 -   **Features:**
     -   Form to input the Target URL (GitHub).
     -   Configuration section for AI Provider (Ollama model selection or API key input).
     -   Toggle switch to select Delivery Option 1 (Zip) or Option 2 (Full Git Repo).
-    -   Real-time progress indicators (using HTMX SSE or WebSockets) detailing the current phase: "Fetching Repo", "Analyzing Public API", "Generating Specs", "Zipping...", or "Implementing Code...".
+    -   Real-time progress indicators (using GUI progress bars and background thread signals) detailing the current phase: "Fetching Repo", "Analyzing Public API", "Generating Specs", "Zipping...", or "Implementing Code...".
 
 ## 5. Ecosystem Expansion Roadmap
 While the MVP focuses on GitHub repository URLs, the architecture must support future expansion:
@@ -71,10 +71,10 @@ While the MVP focuses on GitHub repository URLs, the architecture must support f
 ## 7. Architecture Overview
 ```mermaid
 graph TD
-    UI[Web UI HTMX] --> API[Python Backend]
-    API --> Config[Config: Ollama/Keys]
+    UI[Desktop GUI] --> Core[Application Core]
+    Core --> Config[Config: Ollama/Keys]
 
-    API --> Ingest[Ingestion Module]
+    Core --> Ingest[Ingestion Module]
     Ingest --> Fetch[Fetch GitHub Repo]
     Fetch --> Filter[Filter: Keep Docs/Types, Drop Impl]
 
