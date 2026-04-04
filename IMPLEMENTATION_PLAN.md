@@ -3,13 +3,13 @@
 This document breaks down the development of Spite into actionable, sequential steps for an AI agent or human developer.
 
 ## Phase 1: Project Setup and Foundational Architecture
-1. **Initialize Project:** Create a standard Python virtual environment (or use Poetry/uv). Install core dependencies: `fastapi` (or `flask`), `uvicorn`, `httpx` (for GitHub API), and any chosen LLM interface library (e.g., `ollama` python package, `openai`).
-2. **Directory Structure:** Set up directories for `src/` (backend logic), `templates/` (HTML/HTMX), `static/` (CSS/JS), and `tests/`.
-3. **Basic UI Skeleton:** Create a base HTML template with HTMX included (via CDN) and a minimal CSS framework (like Tailwind or PicoCSS). Implement a simple form with:
-   - Input for GitHub URL.
+1. **Initialize Project:** Create a standard Python virtual environment (or use Poetry/uv). Install core dependencies: `PyQt6` (or `CustomTkinter`), `httpx` (for GitHub API), and any chosen LLM interface library (e.g., `ollama` python package, `openai`).
+2. **Directory Structure:** Set up directories for `src/` (core logic), `ui/` (GUI components), and `tests/`.
+3. **Basic UI Skeleton:** Create a main application window using the chosen GUI framework. Implement a simple form with:
+   - Input field for GitHub URL.
    - Dropdown/Input for AI Provider (Ollama model selection or API Key).
    - Radio buttons/Toggle for Delivery Option (Zip vs. Full Repo).
-4. **FastAPI Routes:** Create the basic routes to serve the UI and handle form submissions via HTMX.
+4. **UI Integration:** Connect the UI signals (like button clicks) to the core application functions.
 
 ## Phase 2: Ingestion and "Dirty" Analysis
 1. **GitHub Ingestion Module (`src/ingest.py`):**
@@ -26,10 +26,10 @@ This document breaks down the development of Spite into actionable, sequential s
 ## Phase 3: Delivery Option 1 (Zip Generation)
 1. **Packaging Module (`src/packager.py`):**
    - Implement a function `create_zip_payload(specs_dict)`. It should take the four Markdown strings from the Analyzer and create an in-memory `.zip` file (using Python's `zipfile` module).
-2. **API Integration:**
-   - Update the FastAPI route handling the form submission. If "Option 1" is selected, trigger the Ingest -> Analyze -> Package pipeline.
-   - Return the generated `.zip` file to the user as a downloadable response.
-   - *UX Improvement:* Use HTMX to show a loading spinner or progress text ("Analyzing repository...") while this backend process runs.
+2. **UI Integration:**
+   - Update the UI event handler for the form submission. If "Option 1" is selected, trigger the Ingest -> Analyze -> Package pipeline in a background thread to keep the UI responsive.
+   - Use a GUI file dialog to allow the user to save the generated `.zip` file.
+   - *UX Improvement:* Show a GUI progress bar or status label ("Analyzing repository...") while this background process runs.
 
 ## Phase 4: Delivery Option 2 (Full AI Implementation)
 1. **Git Initialization:**
@@ -42,11 +42,11 @@ This document breaks down the development of Spite into actionable, sequential s
    - Parse the LLM's code output.
    - Write the generated files to the newly initialized Git directory.
    - Run `git add .` and `git commit -m "Initial clean-room implementation"`.
-4. **API Integration:**
-   - Update the FastAPI route. If "Option 2" is selected, run the full pipeline: Ingest -> Analyze -> Generate Code -> Commit.
-   - Return an HTMX response displaying the local path to the generated Git repository, indicating success.
+4. **UI Integration:**
+   - Update the UI event handler. If "Option 2" is selected, run the full pipeline (Ingest -> Analyze -> Generate Code -> Commit) in a background thread.
+   - Display a success message box containing the local path to the generated Git repository upon completion.
 
 ## Phase 5: Refinement and Testing
 1. **Testing:** Execute the unit and integration tests defined in `TESTING.md`. Ensure the strict filtering in Phase 2 holds up.
-2. **UX Polish:** Enhance the HTMX interactions. Implement Server-Sent Events (SSE) to stream progress updates (e.g., "Fetching from GitHub...", "Analyzing public API...", "Generating specifications...", "Writing code...").
+2. **UX Polish:** Enhance the UI interactions. Implement thread-safe GUI signals to update progress indicators smoothly (e.g., "Fetching from GitHub...", "Analyzing public API...", "Generating specifications...", "Writing code...").
 3. **Documentation:** Finalize the project's own `README.md` explaining how to install, run, and use Spite.
