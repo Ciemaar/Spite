@@ -15,7 +15,7 @@ This document breaks down the development of Spite into actionable, sequential s
 ## Phase 2: Ingestion and "Dirty" Analysis
 1. **GitHub Ingestion Module (`src/ingest.py`):**
    - Implement a function to take a GitHub URL, parse the owner/repo, and use the GitHub REST API (via `httpx`) to fetch the repository tree.
-   - Update ingestion logic to also fetch content from provided supplemental URLs and via automated web search (if enabled) to gather public documentation and discussion forum context.
+   - Update ingestion logic to also fetch content from provided supplemental URLs and via automated web search (if enabled) to gather public documentation and discussion forum context. The search should include explicit queries for documentation hosted on platforms like GitHub Pages and Read the Docs.
    - **Crucial Filtering:** Implement logic to *strictly* filter the file list. Only download files matching documentation (`README.md`, `*.md`, `*.rst`, `*.html`) or type definitions (`*.d.ts`, `__init__.pyi`, etc.). *Never* download implementation source files (`*.py`, `*.js`, `*.go` unless they are explicitly type stubs). Incorporate fetched supplemental content as valid contextual input.
 2. **LLM Interface (`src/llm.py`):**
    - Create a uniform interface to interact with Ollama (primary) and cloud providers (secondary).

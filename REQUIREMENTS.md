@@ -21,7 +21,7 @@ As a developer, I want to provide Spite with a GitHub repository URL and instruc
 ## 4. Functional Requirements
 ### 4.1 Target Ingestion & Analysis
 -   **Input:** Accept a target identifier (initially a GitHub repository URL), optionally a list of supplemental URLs (e.g., public documentation, discussion forums), and a checkbox to enable automated web search (enabled by default).
--   **Extraction:** Fetch the target repository's files and fetch content from the supplemental URLs and web search (if enabled) to gather public documentation and discussion forum context.
+-   **Extraction:** Fetch the target repository's files and fetch content from the supplemental URLs and web search (if enabled) to gather public documentation and discussion forum context. The automated web search should explicitly seek documentation from locations like GitHub Pages and Read the Docs.
 -   **Filtering:** The system must strictly filter the files sent to the "Dirty" analysis agent. It should only process:
     -   `README.md` and other documentation files.
     -   Type definition files (e.g., `.d.ts` in TypeScript, `__init__.py` or stubs in Python).
