@@ -35,7 +35,7 @@ You must build two distinct delivery pipelines:
 - Use HTMX for dynamic updates. Specifically, use HTMX Server-Sent Events (SSE) or polling to provide the user with real-time feedback during the long-running analysis and generation phases (e.g., "Fetching repository...", "Analyzing public API...", "Generating requirements...", "Writing code...").
 - Include form inputs for:
   - Target GitHub URL.
-  - Supplemental URLs (for public documentation, discussion forums) or a toggle for automated web search.
+  - Supplemental URLs (for public documentation, discussion forums) and a checkbox to enable automated web search (enabled by default).
   - AI Provider Selection (Ollama model dropdown or API Key input field).
   - Delivery Option Toggle (Zip vs. Full Implementation).
 

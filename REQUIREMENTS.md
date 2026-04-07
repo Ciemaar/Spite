@@ -20,8 +20,8 @@ As a developer, I want to provide Spite with a GitHub repository URL and instruc
 
 ## 4. Functional Requirements
 ### 4.1 Target Ingestion & Analysis
--   **Input:** Accept a target identifier (initially a GitHub repository URL), and optionally a list of supplemental URLs (e.g., public documentation, discussion forums) or a toggle for automated web search.
--   **Extraction:** Fetch the target repository's files and fetch content from the supplemental URLs or web search to gather public documentation and discussion forum context.
+-   **Input:** Accept a target identifier (initially a GitHub repository URL), optionally a list of supplemental URLs (e.g., public documentation, discussion forums), and a checkbox to enable automated web search (enabled by default).
+-   **Extraction:** Fetch the target repository's files and fetch content from the supplemental URLs and web search (if enabled) to gather public documentation and discussion forum context.
 -   **Filtering:** The system must strictly filter the files sent to the "Dirty" analysis agent. It should only process:
     -   `README.md` and other documentation files.
     -   Type definition files (e.g., `.d.ts` in TypeScript, `__init__.py` or stubs in Python).
@@ -55,7 +55,7 @@ As a developer, I want to provide Spite with a GitHub repository URL and instruc
 -   **Frontend:** A clean, professional, fast UI built with HTMX and Tailwind CSS (or similar minimal CSS framework).
 -   **Features:**
     -   Form to input the Target URL (GitHub).
-    -   Input field for a list of supplemental URLs (public documentation, discussion forums) or a toggle for automated web search.
+    -   Input field for a list of supplemental URLs (public documentation, discussion forums) and a checkbox to enable automated web search (enabled by default).
     -   Configuration section for AI Provider (Ollama model selection or API key input).
     -   Toggle switch to select Delivery Option 1 (Zip) or Option 2 (Full Git Repo).
     -   Real-time progress indicators (using HTMX SSE or WebSockets) detailing the current phase: "Fetching Repo", "Analyzing Public API", "Generating Specs", "Zipping...", or "Implementing Code...".

@@ -7,7 +7,7 @@ This document breaks down the development of Spite into actionable, sequential s
 2. **Directory Structure:** Set up directories for `src/` (backend logic), `templates/` (HTML/HTMX), `static/` (CSS/JS), and `tests/`.
 3. **Basic UI Skeleton:** Create a base HTML template with HTMX included (via CDN) and a minimal CSS framework (like Tailwind or PicoCSS). Implement a simple form with:
    - Input for GitHub URL.
-   - Text area/input for supplemental URLs (public documentation, discussion forums) or a toggle for automated web search.
+   - Text area/input for supplemental URLs (public documentation, discussion forums) and a checkbox to enable automated web search (enabled by default).
    - Dropdown/Input for AI Provider (Ollama model selection or API Key).
    - Radio buttons/Toggle for Delivery Option (Zip vs. Full Repo).
 4. **FastAPI Routes:** Create the basic routes to serve the UI and handle form submissions via HTMX.
@@ -15,7 +15,7 @@ This document breaks down the development of Spite into actionable, sequential s
 ## Phase 2: Ingestion and "Dirty" Analysis
 1. **GitHub Ingestion Module (`src/ingest.py`):**
    - Implement a function to take a GitHub URL, parse the owner/repo, and use the GitHub REST API (via `httpx`) to fetch the repository tree.
-   - Update ingestion logic to also fetch content from provided supplemental URLs (or via automated web search) to gather public documentation and discussion forum context.
+   - Update ingestion logic to also fetch content from provided supplemental URLs and via automated web search (if enabled) to gather public documentation and discussion forum context.
    - **Crucial Filtering:** Implement logic to *strictly* filter the file list. Only download files matching documentation (`README.md`, `*.md`) or type definitions (`*.d.ts`, `__init__.pyi`, etc.). *Never* download implementation source files (`*.py`, `*.js`, `*.go` unless they are explicitly type stubs). Incorporate fetched supplemental content as valid contextual input.
 2. **LLM Interface (`src/llm.py`):**
    - Create a uniform interface to interact with Ollama (primary) and cloud providers (secondary).
