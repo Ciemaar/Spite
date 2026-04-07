@@ -7,6 +7,7 @@ This document breaks down the development of Spite into actionable, sequential s
 2. **Directory Structure:** Set up directories for `src/` (backend logic), `templates/` (HTML/HTMX), `static/` (CSS/JS), and `tests/`.
 3. **Basic UI Skeleton:** Create a base HTML template with HTMX included (via CDN) and a minimal CSS framework (like Tailwind or PicoCSS). Implement a simple form with:
    - Input for GitHub URL.
+   - Text area/input for supplemental URLs (public documentation, discussion forums) or a toggle for automated web search.
    - Dropdown/Input for AI Provider (Ollama model selection or API Key).
    - Radio buttons/Toggle for Delivery Option (Zip vs. Full Repo).
 4. **FastAPI Routes:** Create the basic routes to serve the UI and handle form submissions via HTMX.
@@ -14,18 +15,19 @@ This document breaks down the development of Spite into actionable, sequential s
 ## Phase 2: Ingestion and "Dirty" Analysis
 1. **GitHub Ingestion Module (`src/ingest.py`):**
    - Implement a function to take a GitHub URL, parse the owner/repo, and use the GitHub REST API (via `httpx`) to fetch the repository tree.
-   - **Crucial Filtering:** Implement logic to *strictly* filter the file list. Only download files matching documentation (`README.md`, `*.md`) or type definitions (`*.d.ts`, `__init__.pyi`, etc.). *Never* download implementation source files (`*.py`, `*.js`, `*.go` unless they are explicitly type stubs).
+   - Update ingestion logic to also fetch content from provided supplemental URLs (or via automated web search) to gather public documentation and discussion forum context.
+   - **Crucial Filtering:** Implement logic to *strictly* filter the file list. Only download files matching documentation (`README.md`, `*.md`) or type definitions (`*.d.ts`, `__init__.pyi`, etc.). *Never* download implementation source files (`*.py`, `*.js`, `*.go` unless they are explicitly type stubs). Incorporate fetched supplemental content as valid contextual input.
 2. **LLM Interface (`src/llm.py`):**
    - Create a uniform interface to interact with Ollama (primary) and cloud providers (secondary).
    - Implement error handling for connection issues, rate limits, and context window exhaustion.
 3. **The "Dirty" Agent (`src/analyzer.py`):**
-   - Construct a prompt that feeds the filtered documentation/types to the LLM. The prompt must instruct the LLM to act as a clean-room specification writer.
-   - The prompt must mandate outputting exactly four sections (or distinct JSON keys): Requirements, Testing Strategy, Implementation Plan, and Agent Instructions.
-   - Implement logic to parse this response into the four distinct Markdown strings.
+   - Construct a prompt that feeds the filtered documentation/types to the LLM, as well as any fetched public documentation and discussion forum context. The prompt must instruct the LLM to act as a clean-room specification writer.
+   - The prompt must mandate outputting exactly five sections (or distinct JSON keys): Requirements, Testing Strategy, Implementation Plan, Agent Instructions, and Improvements (opportunities for improvement based on usage and features, e.g., behavioral changes).
+   - Implement logic to parse this response into five distinct Markdown strings (including `IMPROVEMENTS.md`).
 
 ## Phase 3: Delivery Option 1 (Zip Generation)
 1. **Packaging Module (`src/packager.py`):**
-   - Implement a function `create_zip_payload(specs_dict)`. It should take the four Markdown strings from the Analyzer and create an in-memory `.zip` file (using Python's `zipfile` module).
+   - Implement a function `create_zip_payload(specs_dict)`. It should take the five Markdown strings from the Analyzer and create an in-memory `.zip` file (using Python's `zipfile` module).
 2. **API Integration:**
    - Update the FastAPI route handling the form submission. If "Option 1" is selected, trigger the Ingest -> Analyze -> Package pipeline.
    - Return the generated `.zip` file to the user as a downloadable response.

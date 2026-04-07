@@ -20,21 +20,23 @@ As a developer, I want to provide Spite with a GitHub repository URL and instruc
 
 ## 4. Functional Requirements
 ### 4.1 Target Ingestion & Analysis
--   **Input:** Accept a target identifier (initially a GitHub repository URL).
--   **Extraction:** Fetch the target repository's files.
+-   **Input:** Accept a target identifier (initially a GitHub repository URL), and optionally a list of supplemental URLs (e.g., public documentation, discussion forums) or a toggle for automated web search.
+-   **Extraction:** Fetch the target repository's files and fetch content from the supplemental URLs or web search to gather public documentation and discussion forum context.
 -   **Filtering:** The system must strictly filter the files sent to the "Dirty" analysis agent. It should only process:
     -   `README.md` and other documentation files.
     -   Type definition files (e.g., `.d.ts` in TypeScript, `__init__.py` or stubs in Python).
     -   Exported function/class signatures (parsing ASTs if necessary, but omitting implementation bodies).
+    -   Content fetched from supplemental URLs or web searches.
 -   **Output Generation:** The Dirty agent must generate:
     -   `REQUIREMENTS.md`: Detailed functional requirements based on the public API.
     -   `TESTING.md`: A comprehensive test plan to verify functional equivalence.
     -   `IMPLEMENTATION_PLAN.md`: A step-by-step guide for rebuilding the project from scratch.
     -   `AGENT_INSTRUCTIONS.md`: Specific prompts and constraints for the implementing AI agent.
+    -   `IMPROVEMENTS.md`: Opportunities for improvement based on usage and features from public documentation and discussion forums (e.g., behavioral changes).
 
 ### 4.2 Delivery Mechanisms
 #### Delivery Option 1: Zip Archive
--   Package the generated markdown files (`REQUIREMENTS.md`, `TESTING.md`, `IMPLEMENTATION_PLAN.md`, `AGENT_INSTRUCTIONS.md`) into a structured `.zip` archive.
+-   Package the generated markdown files (`REQUIREMENTS.md`, `TESTING.md`, `IMPLEMENTATION_PLAN.md`, `AGENT_INSTRUCTIONS.md`, `IMPROVEMENTS.md`) into a structured `.zip` archive.
 -   Provide the zip file for download via the web interface.
 
 #### Delivery Option 2: Local Git Working Directory
@@ -53,6 +55,7 @@ As a developer, I want to provide Spite with a GitHub repository URL and instruc
 -   **Frontend:** A clean, professional, fast UI built with HTMX and Tailwind CSS (or similar minimal CSS framework).
 -   **Features:**
     -   Form to input the Target URL (GitHub).
+    -   Input field for a list of supplemental URLs (public documentation, discussion forums) or a toggle for automated web search.
     -   Configuration section for AI Provider (Ollama model selection or API key input).
     -   Toggle switch to select Delivery Option 1 (Zip) or Option 2 (Full Git Repo).
     -   Real-time progress indicators (using HTMX SSE or WebSockets) detailing the current phase: "Fetching Repo", "Analyzing Public API", "Generating Specs", "Zipping...", or "Implementing Code...".

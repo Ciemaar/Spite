@@ -17,13 +17,13 @@ Please strictly adhere to the following guidelines and instructions as you imple
 ### 2.1 Enforce the Clean Room (Crucial)
 You must implement a strict architectural boundary between the "Dirty" and "Clean" phases.
 - The module that fetches and analyzes the target repository (the "Dirty" side) must **never** pass source code implementation details to the specification generator.
-- It should only extract and pass: `README.md`, documentation, exported type definitions (e.g., `.d.ts`, `__init__.py` stubs), and public function signatures.
+- It should only extract and pass: `README.md`, documentation, exported type definitions (e.g., `.d.ts`, `__init__.py` stubs), public function signatures, as well as context gathered from external public documentation and discussion forums.
 - If you use an LLM to help extract these signatures, that LLM session must be isolated and its output strictly formatted as Markdown specifications.
 
 ### 2.2 Implement Delivery Options
 You must build two distinct delivery pipelines:
 - **Delivery Option 1 (Zip Plan Generation):**
-  - The system analyzes the target and generates four key files: `REQUIREMENTS.md`, `TESTING.md`, `IMPLEMENTATION_PLAN.md`, and `AGENT_INSTRUCTIONS.md` (which are instructions for *another* agent to write the code).
+  - The system analyzes the target and generates five key files: `REQUIREMENTS.md`, `TESTING.md`, `IMPLEMENTATION_PLAN.md`, `AGENT_INSTRUCTIONS.md` (which are instructions for *another* agent to write the code), and `IMPROVEMENTS.md` (capturing opportunities for improvement based on usage and features).
   - Package these into a `.zip` file and serve it to the user via the frontend.
 - **Delivery Option 2 (Full AI Implementation):**
   - The system performs the analysis above, but then automatically initializes a new local Git repository.
@@ -35,6 +35,7 @@ You must build two distinct delivery pipelines:
 - Use HTMX for dynamic updates. Specifically, use HTMX Server-Sent Events (SSE) or polling to provide the user with real-time feedback during the long-running analysis and generation phases (e.g., "Fetching repository...", "Analyzing public API...", "Generating requirements...", "Writing code...").
 - Include form inputs for:
   - Target GitHub URL.
+  - Supplemental URLs (for public documentation, discussion forums) or a toggle for automated web search.
   - AI Provider Selection (Ollama model dropdown or API Key input field).
   - Delivery Option Toggle (Zip vs. Full Implementation).
 
