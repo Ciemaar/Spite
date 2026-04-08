@@ -21,7 +21,7 @@ You must implement a strict architectural boundary between the "Dirty" and "Clea
 - If you use an LLM to help extract these signatures, that LLM session must be isolated and its output strictly formatted as Markdown specifications.
 
 ### 2.2 Implement Delivery Options
-You must build two distinct delivery pipelines:
+You must build three distinct delivery pipelines:
 - **Delivery Option 1 (Zip Plan Generation):**
   - The system analyzes the target and generates five key files: `REQUIREMENTS.md`, `TESTING.md`, `IMPLEMENTATION_PLAN.md`, `AGENT_INSTRUCTIONS.md` (which are instructions for *another* agent to write the code), and `IMPROVEMENTS.md` (capturing opportunities for improvement based on usage and features).
   - Package these into a `.zip` file and serve it to the user via the frontend.
@@ -29,15 +29,19 @@ You must build two distinct delivery pipelines:
   - The system performs the analysis above, but then automatically initializes a new local Git repository.
   - It instantiates a fresh, isolated AI session (the "Clean" agent) using the user's selected model (e.g., via Ollama).
   - It feeds the generated specifications to this Clean agent and runs an execution loop to generate the code, write the files, and commit them to the new Git repository.
+- **Delivery Option 3 (AI Autonomous Recreation & Enhancement):**
+  - After completing all steps in Delivery Option 2, the Clean agent is supplied with the generated `IMPROVEMENTS.md`.
+  - It performs a secondary execution loop to aggressively apply these improvements to the codebase, which may include making breaking changes to the original API or functionality.
+  - It commits these enhancements to the local Git repository.
 
 ### 2.3 Frontend Requirements (HTMX)
 - Build a clean, professional web interface. Avoid any satirical or "evil" tone; keep it strictly utilitarian and professional.
-- Use HTMX for dynamic updates. Specifically, use HTMX Server-Sent Events (SSE) or polling to provide the user with real-time feedback during the long-running analysis and generation phases (e.g., "Fetching repository...", "Analyzing public API...", "Generating requirements...", "Writing code...").
+- Use HTMX for dynamic updates. Specifically, use HTMX Server-Sent Events (SSE) or polling to provide the user with real-time feedback during the long-running analysis and generation phases (e.g., "Fetching repository...", "Analyzing public API...", "Generating requirements...", "Writing code...", "Applying improvements...").
 - Include form inputs for:
   - Target GitHub URL.
   - Supplemental URLs (for public documentation, discussion forums) and a checkbox to enable automated web search (enabled by default).
   - AI Provider Selection (Ollama model dropdown or API Key input field).
-  - Delivery Option Toggle (Zip vs. Full Implementation).
+  - Delivery Option Selector (Option 1: Zip, Option 2: Full Repo, Option 3: Enhanced Repo).
 
 ## 3. Development Workflow & Rules
 

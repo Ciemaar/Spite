@@ -50,12 +50,22 @@ This document outlines the testing approach for the Spite clean-room implementat
   - The directory is a valid Git repository with a commit containing the new files.
   - The endpoint returns the path to this directory.
 
+### 2.3 Full Delivery Option 3 Pipeline (Enhanced Git Generation)
+- **Goal:** Verify the end-to-end flow of generating the code, applying improvements, and committing to a local Git repository, *without* relying on a live LLM.
+- **Setup:** Use a mocked GitHub client and a mocked LLM client for *both* the "Dirty" and "Clean" agents.
+- **Execution:** Trigger the main Spite API endpoint for Option 3.
+- **Assert:**
+  - The "Clean" agent mock is called sequentially: first with the spec output, then with the `IMPROVEMENTS.md` output.
+  - A new local directory is created and initial code is written and committed.
+  - The mocked enhanced code files are written to the directory, resulting in subsequent commits.
+  - The endpoint returns the path to this directory.
+
 ## 3. Web UI (HTMX) Tests
 
 ### 3.1 Endpoint Validation (`test_web.py`)
 - **Target:** The FastAPI/Flask routes serving the HTMX frontend.
 - **Tests:**
-  - **GET `/`:** Assert it returns a 200 status code and contains the expected HTML form elements (URL input, supplemental URL input, AI provider select, Delivery toggle).
+  - **GET `/`:** Assert it returns a 200 status code and contains the expected HTML form elements (URL input, supplemental URL input, AI provider select, Delivery option selector including Option 3).
   - **POST `/analyze` (HTMX submission):** Assert it returns the appropriate HTML fragment (e.g., a progress indicator or the next step in the UI) and starts the backend job.
   - **SSE/Polling Endpoints:** Test that the endpoint responsible for streaming progress updates correctly yields Server-Sent Events or returns the expected JSON state.
 
@@ -69,3 +79,4 @@ Because Spite's core value is legal and architectural isolation, automated tests
 4. **Run Option 2:** Use Spite (with a real local Ollama model) to fully recreate the library.
 5. **Audit Code:** Manually review the generated codebase. Compare it to the original library. Ensure it is functionally equivalent (write a quick script to test both libraries against the same inputs) but structurally distinct.
 6. **Verify Git History:** Check the generated Git repository to ensure only the newly created code is present in the history, with no traces of the original target's repository.
+7. **Run Option 3:** Run the system using Option 3 and perform the same audit, ensuring that the generated `IMPROVEMENTS.md` have been effectively implemented into the new codebase and history accurately reflects these enhancement commits.

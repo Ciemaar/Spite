@@ -18,6 +18,9 @@ As a developer, I want to provide Spite with a GitHub repository URL and instruc
 2.  The specification is passed to a fresh, isolated "Clean" agent session.
 3.  The Clean agent autonomously writes the new codebase, initializes a local Git repository, and commits the result.
 
+### 3.3 Scenario: AI Autonomous Recreation & Enhancement (Delivery Option 3)
+As a developer, I want Spite to not only recreate the project but also aggressively enhance it based on public feedback. After performing the full clean-room recreation (Delivery Option 2), Spite will take the generated `IMPROVEMENTS.md` and use the "Clean" agent to iteratively apply these changes to the codebase, even if they alter the original API or functionality, committing the final, improved software to the repository.
+
 ## 4. Functional Requirements
 ### 4.1 Target Ingestion & Analysis
 -   **Input:** Accept a target identifier (initially a GitHub repository URL), optionally a list of supplemental URLs (e.g., public documentation, discussion forums), and a checkbox to enable automated web search (enabled by default).
@@ -46,6 +49,12 @@ As a developer, I want to provide Spite with a GitHub repository URL and instruc
 -   Execute an agentic loop (plan -> write code -> run tests -> iterate) until the implementation satisfies the `TESTING.md` plan.
 -   Commit the final codebase to the local Git repository and present the directory path to the user.
 
+#### Delivery Option 3: Enhanced Local Git Working Directory
+-   Execute all steps from Delivery Option 2 to establish a baseline clean-room implementation.
+-   Feed the Clean agent the `IMPROVEMENTS.md` document.
+-   Execute a secondary agentic loop to apply the improvements, allowing for breaking changes to the original API or functionality if necessary to address user feedback.
+-   Commit the enhanced codebase as subsequent commits in the local Git repository and present the directory path to the user.
+
 ### 4.3 AI Integration
 -   **Ollama (Primary):** Integrate with a locally running Ollama instance via its REST API. Allow the user to specify the model name (e.g., `llama3`, `qwen2.5-coder`).
 -   **Cloud Providers (Secondary):** Support user-provided API keys for OpenAI (GPT-4o) and Anthropic (Claude 3.5 Sonnet) as fallback or premium options.
@@ -57,8 +66,8 @@ As a developer, I want to provide Spite with a GitHub repository URL and instruc
     -   Form to input the Target URL (GitHub).
     -   Input field for a list of supplemental URLs (public documentation, discussion forums) and a checkbox to enable automated web search (enabled by default).
     -   Configuration section for AI Provider (Ollama model selection or API key input).
-    -   Toggle switch to select Delivery Option 1 (Zip) or Option 2 (Full Git Repo).
-    -   Real-time progress indicators (using HTMX SSE or WebSockets) detailing the current phase: "Fetching Repo", "Analyzing Public API", "Generating Specs", "Zipping...", or "Implementing Code...".
+    -   Selector (radio buttons or dropdown) for Delivery Option 1 (Zip), Option 2 (Full Git Repo), or Option 3 (Enhanced Git Repo).
+    -   Real-time progress indicators (using HTMX SSE or WebSockets) detailing the current phase: "Fetching Repo", "Analyzing Public API", "Generating Specs", "Zipping...", "Implementing Code...", or "Applying Improvements...".
 
 ## 5. Ecosystem Expansion Roadmap
 While the MVP focuses on GitHub repository URLs, the architecture must support future expansion:

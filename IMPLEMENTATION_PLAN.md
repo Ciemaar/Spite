@@ -9,7 +9,7 @@ This document breaks down the development of Spite into actionable, sequential s
    - Input for GitHub URL.
    - Text area/input for supplemental URLs (public documentation, discussion forums) and a checkbox to enable automated web search (enabled by default).
    - Dropdown/Input for AI Provider (Ollama model selection or API Key).
-   - Radio buttons/Toggle for Delivery Option (Zip vs. Full Repo).
+   - Radio buttons/Dropdown for Delivery Option (Option 1: Zip, Option 2: Full Repo, Option 3: Enhanced Repo).
 4. **FastAPI Routes:** Create the basic routes to serve the UI and handle form submissions via HTMX.
 
 ## Phase 2: Ingestion and "Dirty" Analysis
@@ -48,7 +48,16 @@ This document breaks down the development of Spite into actionable, sequential s
    - Update the FastAPI route. If "Option 2" is selected, run the full pipeline: Ingest -> Analyze -> Generate Code -> Commit.
    - Return an HTMX response displaying the local path to the generated Git repository, indicating success.
 
-## Phase 5: Refinement and Testing
+## Phase 5: Delivery Option 3 (AI Enhancement)
+1. **Enhancement Loop (`src/generator.py`):**
+   - After Phase 4 completes, if Option 3 was selected, supply the Clean Agent with the generated `IMPROVEMENTS.md`.
+   - Instruct the LLM to iteratively apply the improvements to the newly generated codebase, making API or functionality changes as required.
+   - Run tests (or ask the LLM to update the tests) and commit the changes as subsequent commits to the same Git repository.
+2. **API Integration:**
+   - Update the FastAPI route. If "Option 3" is selected, run the full pipeline: Ingest -> Analyze -> Generate Code -> Apply Improvements -> Commit.
+   - Return an HTMX response displaying the local path to the generated, enhanced Git repository.
+
+## Phase 6: Refinement and Testing
 1. **Testing:** Execute the unit and integration tests defined in `TESTING.md`. Ensure the strict filtering in Phase 2 holds up.
-2. **UX Polish:** Enhance the HTMX interactions. Implement Server-Sent Events (SSE) to stream progress updates (e.g., "Fetching from GitHub...", "Analyzing public API...", "Generating specifications...", "Writing code...").
+2. **UX Polish:** Enhance the HTMX interactions. Implement Server-Sent Events (SSE) to stream progress updates (e.g., "Fetching from GitHub...", "Analyzing public API...", "Generating specifications...", "Writing code...", "Applying improvements...").
 3. **Documentation:** Finalize the project's own `README.md` explaining how to install, run, and use Spite.
