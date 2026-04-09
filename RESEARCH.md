@@ -27,3 +27,9 @@ Spite aims to replicate this workflow locally using AI, specifically leveraging 
 - **Copilot Workspace:** Focuses on planning and task execution based on existing issues.
 
 **Conclusion:** Spite fills a unique niche by strictly enforcing the "Analysis -> Specification -> Isolated Implementation" pipeline, empowering users to legally and safely recreate dependencies using local AI infrastructure.
+
+## Bibliography
+1. **Malus.sh** ([malus.sh](https://malus.sh/)): The satirical website that inspired this tool. It highlighted the theoretical (and humorous) implications of using AI to strip open-source obligations via a "Clean Room as a Service."
+2. **Compaq and the IBM PC BIOS** ([All About Circuits](https://www.allaboutcircuits.com/news/how-compaqs-clone-computers-skirted-ibms-patents-and-gave-rise-to-eisa/)): Historical precedent for clean-room engineering. Compaq famously used a "dirty" team to read the IBM BIOS source and write specs, and a "clean" team to write the clone code, establishing the legality of functionally identical, non-infringing software.
+3. **Cursor AI Editor** ([cursor.com](https://cursor.com/)): Evaluated as a potential tool for the manual implementation phase (Delivery Option 1). Cursor integrates AI directly into the IDE but lacks a native, enforced boundary for clean-room legal isolation.
+4. **GitHub Copilot Workspace** ([githubnext.com/projects/copilot-workspace](https://githubnext.com/projects/copilot-workspace)): Evaluated for its planning capabilities. Copilot Workspace generates plans and tasks based on issues; Spite adopts a similar planning approach but strictly walls off the target's source code from the implementing agent.
