@@ -22,12 +22,12 @@ This document breaks down the development of Spite into actionable, sequential s
    - Implement error handling for connection issues, rate limits, and context window exhaustion.
 3. **The "Dirty" Agent (`src/analyzer.py`):**
    - Construct a prompt that feeds the filtered documentation/types to the LLM, as well as any fetched public documentation and discussion forum context. The prompt must instruct the LLM to act as a clean-room specification writer.
-   - The prompt must mandate outputting exactly six sections (or distinct JSON keys): Requirements, Testing Strategy, Implementation Plan, Agent Instructions, Improvements (opportunities for improvement based on usage and features, e.g., behavioral changes), and a Dirty Bibliography (links and commentary on sources considered).
-   - Implement logic to parse this response into six distinct Markdown strings (including `IMPROVEMENTS.md` and `DIRTY_BIBLIOGRAPHY.md`).
+   - The prompt must mandate outputting exactly seven sections (or distinct JSON keys): Requirements, Testing Strategy, Implementation Plan, Agent Instructions, Improvements (opportunities for improvement based on usage and features, e.g., behavioral changes), a Dirty Bibliography (links and commentary on sources considered), and a System Overview (original descriptions and a proposed replacement name).
+   - Implement logic to parse this response into seven distinct Markdown strings (including `IMPROVEMENTS.md`, `DIRTY_BIBLIOGRAPHY.md`, and `SYSTEM_OVERVIEW.md`).
 
 ## Phase 3: Delivery Mechanism 1 (Phase 1 - Zip Generation)
 1. **Packaging Module (`src/packager.py`):**
-   - Implement a function `create_zip_payload(specs_dict)`. It should take the six Markdown strings from the Analyzer and create an in-memory `.zip` file (using Python's `zipfile` module).
+   - Implement a function `create_zip_payload(specs_dict)`. It should take the seven Markdown strings from the Analyzer and create an in-memory `.zip` file (using Python's `zipfile` module).
 2. **API Integration:**
    - Update the FastAPI route handling the form submission. If "Phase 1" is the target, trigger the Ingest -> Analyze -> Package pipeline.
    - Return the generated `.zip` file to the user as a downloadable response, alongside a UI button to "Proceed to Phase 2".

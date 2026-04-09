@@ -23,7 +23,7 @@ You must implement a strict architectural boundary between the "Dirty" and "Clea
 ### 2.2 Implement Delivery Phases
 You must build three distinct delivery phases and support a workflow that allows the user to progress through them sequentially:
 - **Phase 1 (Zip Plan Generation):**
-  - The system analyzes the target and generates six key files: `REQUIREMENTS.md`, `TESTING.md`, `IMPLEMENTATION_PLAN.md`, `AGENT_INSTRUCTIONS.md` (which are instructions for *another* agent to write the code), `IMPROVEMENTS.md` (capturing opportunities for improvement based on usage and features), and `DIRTY_BIBLIOGRAPHY.md` (links and commentary on sources considered by the analysis agent).
+  - The system analyzes the target and generates seven key files: `REQUIREMENTS.md`, `TESTING.md`, `IMPLEMENTATION_PLAN.md`, `AGENT_INSTRUCTIONS.md` (which are instructions for *another* agent to write the code), `IMPROVEMENTS.md` (capturing opportunities for improvement based on usage and features), `DIRTY_BIBLIOGRAPHY.md` (links and commentary on sources considered by the analysis agent), and `SYSTEM_OVERVIEW.md` (original 1-sentence, 1-paragraph, and 1-page descriptions of the system alongside a proposed replacement name).
   - Package these into a `.zip` file and serve it to the user via the frontend, offering a UI prompt to proceed to Phase 2.
 - **Phase 2 (Full AI Implementation):**
   - The system performs the analysis above (or takes the output if Phase 1 was already completed), but then automatically initializes a new local Git repository.

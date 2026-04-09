@@ -39,10 +39,11 @@ The system should support a workflow where I can review the output of Phase 1 an
     -   `AGENT_INSTRUCTIONS.md`: Specific prompts and constraints for the implementing AI agent.
     -   `IMPROVEMENTS.md`: Opportunities for improvement based on usage and features from public documentation and discussion forums (e.g., behavioral changes).
     -   `DIRTY_BIBLIOGRAPHY.md`: A bibliography of sources considered by the Dirty agent (links and commentary).
+    -   `SYSTEM_OVERVIEW.md`: Original, non-quoted descriptions of the target system (in one sentence, one paragraph, and one page lengths) along with a proposed name for the replacement system.
 
 ### 4.2 Delivery Mechanisms
 #### Phase 1: Zip Archive
--   Package the generated markdown files (`REQUIREMENTS.md`, `TESTING.md`, `IMPLEMENTATION_PLAN.md`, `AGENT_INSTRUCTIONS.md`, `IMPROVEMENTS.md`, `DIRTY_BIBLIOGRAPHY.md`) into a structured `.zip` archive.
+-   Package the generated markdown files (`REQUIREMENTS.md`, `TESTING.md`, `IMPLEMENTATION_PLAN.md`, `AGENT_INSTRUCTIONS.md`, `IMPROVEMENTS.md`, `DIRTY_BIBLIOGRAPHY.md`, `SYSTEM_OVERVIEW.md`) into a structured `.zip` archive.
 -   Provide the zip file for download via the web interface.
 
 #### Phase 2: Local Git Working Directory
