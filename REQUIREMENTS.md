@@ -9,17 +9,19 @@ Spite is a local, AI-powered "Clean Room" development tool designed to safely re
 3.  **Local Execution:** Prioritize privacy and security by defaulting to local LLMs (e.g., via Ollama), with the option to use user-provided AI service keys (OpenAI, Anthropic).
 
 ## 3. User Stories
-### 3.1 Scenario: Analysis & Manual Implementation (Delivery Option 1)
+### 3.1 Scenario: Analysis & Manual Implementation (Phase 1)
 As a developer, I want to provide Spite with a GitHub repository URL so that it analyzes the project's public interfaces and generates a downloadable `.zip` file. This zip file should contain comprehensive requirements, agent instructions, test plans, and an implementation plan. I will then use my own AI coding tool (like GitHub Copilot or Claude Code) in a fresh workspace to implement the software according to the provided specifications, guaranteeing a clean-room break.
 
-### 3.2 Scenario: Full AI Autonomous Recreation (Delivery Option 2)
+### 3.2 Scenario: Full AI Autonomous Recreation (Phase 2)
 As a developer, I want to provide Spite with a GitHub repository URL and instruct it to fully recreate the project locally. Spite will internally manage the clean-room process:
-1.  The "Dirty" agent analyzes the target and generates the specification.
+1.  The "Dirty" agent analyzes the target and generates the specification (Phase 1).
 2.  The specification is passed to a fresh, isolated "Clean" agent session.
 3.  The Clean agent autonomously writes the new codebase, initializes a local Git repository, and commits the result.
+The system should support a workflow where I can perform Phase 1 first, review the results, and then decide to proceed to Phase 2.
 
-### 3.3 Scenario: AI Autonomous Recreation & Enhancement (Delivery Option 3)
-As a developer, I want Spite to not only recreate the project but also aggressively enhance it based on public feedback. After performing the full clean-room recreation (Delivery Option 2), Spite will take the generated `IMPROVEMENTS.md` and use the "Clean" agent to iteratively apply these changes to the codebase, even if they alter the original API or functionality, committing the final, improved software to the repository.
+### 3.3 Scenario: AI Autonomous Recreation & Enhancement (Phase 3)
+As a developer, I want Spite to not only recreate the project but also aggressively enhance it based on public feedback. After performing the full clean-room recreation (Phase 2), Spite will take the generated `IMPROVEMENTS.md` and use the "Clean" agent to iteratively apply these changes to the codebase, even if they alter the original API or functionality, committing the final, improved software to the repository.
+The system should support a workflow where I can review the output of Phase 1 and/or Phase 2 before deciding to proceed to Phase 3.
 
 ## 4. Functional Requirements
 ### 4.1 Target Ingestion & Analysis
@@ -39,19 +41,20 @@ As a developer, I want Spite to not only recreate the project but also aggressiv
     -   `DIRTY_BIBLIOGRAPHY.md`: A bibliography of sources considered by the Dirty agent (links and commentary).
 
 ### 4.2 Delivery Mechanisms
-#### Delivery Option 1: Zip Archive
+#### Phase 1: Zip Archive
 -   Package the generated markdown files (`REQUIREMENTS.md`, `TESTING.md`, `IMPLEMENTATION_PLAN.md`, `AGENT_INSTRUCTIONS.md`, `IMPROVEMENTS.md`, `DIRTY_BIBLIOGRAPHY.md`) into a structured `.zip` archive.
 -   Provide the zip file for download via the web interface.
 
-#### Delivery Option 2: Local Git Working Directory
+#### Phase 2: Local Git Working Directory
 -   Initialize a new, empty Git repository in a local temporary directory.
 -   Instantiate a new "Clean" AI agent session (e.g., via Ollama) with no prior context of the target repository.
 -   Feed the Clean agent the specifications generated in 4.1.
 -   Execute an agentic loop (plan -> write code -> run tests -> iterate) until the implementation satisfies the `TESTING.md` plan. The Clean agent must also generate a `CLEAN_BIBLIOGRAPHY.md` detailing the sources it considered during implementation.
 -   Commit the final codebase (including `CLEAN_BIBLIOGRAPHY.md`) to the local Git repository and present the directory path to the user.
+-   Provide a UI affordance to continue to Phase 3.
 
-#### Delivery Option 3: Enhanced Local Git Working Directory
--   Execute all steps from Delivery Option 2 to establish a baseline clean-room implementation.
+#### Phase 3: Enhanced Local Git Working Directory
+-   Requires the completion of Phase 2 to establish a baseline clean-room implementation.
 -   Feed the Clean agent the `IMPROVEMENTS.md` document.
 -   Execute a secondary agentic loop to apply the improvements, allowing for breaking changes to the original API or functionality if necessary to address user feedback. The Clean agent must update the `CLEAN_BIBLIOGRAPHY.md` to reflect new sources or reasoning.
 -   Commit the enhanced codebase as subsequent commits in the local Git repository and present the directory path to the user.
@@ -67,14 +70,14 @@ As a developer, I want Spite to not only recreate the project but also aggressiv
     -   Form to input the Target URL (GitHub).
     -   Input field for a list of supplemental URLs (public documentation, discussion forums) and a checkbox to enable automated web search (enabled by default).
     -   Configuration section for AI Provider (Ollama model selection or API key input).
-    -   Selector (radio buttons or dropdown) for Delivery Option 1 (Zip), Option 2 (Full Git Repo), or Option 3 (Enhanced Git Repo).
-    -   Real-time progress indicators (using HTMX SSE or WebSockets) detailing the current phase: "Fetching Repo", "Analyzing Public API", "Generating Specs", "Zipping...", "Implementing Code...", or "Applying Improvements...".
+    -   Selector (radio buttons or dropdown) for Target Phase (Phase 1: Zip, Phase 2: Full Git Repo, or Phase 3: Enhanced Git Repo), with UI support to progressively move between phases.
+    -   Real-time progress indicators (using HTMX SSE or WebSockets) detailing the current step: "Fetching Repo", "Analyzing Public API", "Generating Specs", "Zipping...", "Implementing Code...", or "Applying Improvements...".
 
 ## 5. Ecosystem Expansion Roadmap
 While the MVP focuses on GitHub repository URLs, the architecture must support future expansion:
--   **Phase 1 (MVP):** GitHub repositories.
--   **Phase 2:** Package managers. The user inputs a package name (e.g., `npm:lodash`, `pypi:requests`). Spite fetches the package tarball, extracts the documentation and public signatures, and runs the clean-room process.
--   **Phase 3:** Cargo (Rust), Go Modules, Maven (Java).
+-   **Stage 1 (MVP):** GitHub repositories.
+-   **Stage 2:** Package managers. The user inputs a package name (e.g., `npm:lodash`, `pypi:requests`). Spite fetches the package tarball, extracts the documentation and public signatures, and runs the clean-room process.
+-   **Stage 3:** Cargo (Rust), Go Modules, Maven (Java).
 
 ## 6. Non-Functional Requirements
 -   **Performance:** The extraction and analysis phase should complete within minutes, depending on the target size and local LLM speed.
@@ -94,12 +97,12 @@ graph TD
     Filter --> DirtyAgent[Dirty Agent Ollama]
     DirtyAgent --> Specs[Generate Specs: Req, Tests, Plan]
 
-    Specs --> DelivOpt{Delivery Option?}
+    Specs --> TargetPhase{Target Phase?}
 
-    DelivOpt -- Option 1: Zip --> Packager[Zip Packager]
+    TargetPhase -- Phase 1: Zip --> Packager[Zip Packager]
     Packager --> Download[Download .zip]
 
-    DelivOpt -- Option 2: Full Repo --> CleanRoom[Clean Room Env]
+    TargetPhase -- Phase 2: Full Repo --> CleanRoom[Clean Room Env]
     CleanRoom --> InitGit[Init Git Repo]
     InitGit --> CleanAgent[Clean Agent Ollama]
     Specs --> CleanAgent

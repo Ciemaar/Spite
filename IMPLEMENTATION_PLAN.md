@@ -9,7 +9,7 @@ This document breaks down the development of Spite into actionable, sequential s
    - Input for GitHub URL.
    - Text area/input for supplemental URLs (public documentation, discussion forums) and a checkbox to enable automated web search (enabled by default).
    - Dropdown/Input for AI Provider (Ollama model selection or API Key).
-   - Radio buttons/Dropdown for Delivery Option (Option 1: Zip, Option 2: Full Repo, Option 3: Enhanced Repo).
+   - Radio buttons/Dropdown for Target Phase (Phase 1: Zip, Phase 2: Full Repo, Phase 3: Enhanced Repo).
 4. **FastAPI Routes:** Create the basic routes to serve the UI and handle form submissions via HTMX.
 
 ## Phase 2: Ingestion and "Dirty" Analysis
@@ -25,15 +25,15 @@ This document breaks down the development of Spite into actionable, sequential s
    - The prompt must mandate outputting exactly six sections (or distinct JSON keys): Requirements, Testing Strategy, Implementation Plan, Agent Instructions, Improvements (opportunities for improvement based on usage and features, e.g., behavioral changes), and a Dirty Bibliography (links and commentary on sources considered).
    - Implement logic to parse this response into six distinct Markdown strings (including `IMPROVEMENTS.md` and `DIRTY_BIBLIOGRAPHY.md`).
 
-## Phase 3: Delivery Option 1 (Zip Generation)
+## Phase 3: Delivery Mechanism 1 (Phase 1 - Zip Generation)
 1. **Packaging Module (`src/packager.py`):**
    - Implement a function `create_zip_payload(specs_dict)`. It should take the six Markdown strings from the Analyzer and create an in-memory `.zip` file (using Python's `zipfile` module).
 2. **API Integration:**
-   - Update the FastAPI route handling the form submission. If "Option 1" is selected, trigger the Ingest -> Analyze -> Package pipeline.
-   - Return the generated `.zip` file to the user as a downloadable response.
+   - Update the FastAPI route handling the form submission. If "Phase 1" is the target, trigger the Ingest -> Analyze -> Package pipeline.
+   - Return the generated `.zip` file to the user as a downloadable response, alongside a UI button to "Proceed to Phase 2".
    - *UX Improvement:* Use HTMX to show a loading spinner or progress text ("Analyzing repository...") while this backend process runs.
 
-## Phase 4: Delivery Option 2 (Full AI Implementation)
+## Phase 4: Delivery Mechanism 2 (Phase 2 - Full AI Implementation)
 1. **Git Initialization:**
    - In `src/packager.py`, add a function `init_local_repo()`. This should create a new temporary directory on the local filesystem and run `git init`.
 2. **The "Clean" Agent (`src/generator.py`):**
@@ -46,17 +46,17 @@ This document breaks down the development of Spite into actionable, sequential s
    - Write the generated files to the newly initialized Git directory.
    - Run `git add .` and `git commit -m "Initial clean-room implementation"`.
 4. **API Integration:**
-   - Update the FastAPI route. If "Option 2" is selected, run the full pipeline: Ingest -> Analyze -> Generate Code -> Commit.
-   - Return an HTMX response displaying the local path to the generated Git repository, indicating success.
+   - Update the FastAPI route. If "Phase 2" is the target, ensure Phase 1 is complete, then trigger: Generate Code -> Commit.
+   - Return an HTMX response displaying the local path to the generated Git repository, indicating success, alongside a UI button to "Proceed to Phase 3".
 
-## Phase 5: Delivery Option 3 (AI Enhancement)
+## Phase 5: Delivery Mechanism 3 (Phase 3 - AI Enhancement)
 1. **Enhancement Loop (`src/generator.py`):**
-   - After Phase 4 completes, if Option 3 was selected, supply the Clean Agent with the generated `IMPROVEMENTS.md`.
+   - After Phase 4 completes, if "Phase 3" is the target, supply the Clean Agent with the generated `IMPROVEMENTS.md`.
    - Instruct the LLM to iteratively apply the improvements to the newly generated codebase, making API or functionality changes as required.
    - Instruct the Clean agent to update the `CLEAN_BIBLIOGRAPHY.md` with any new sources or considerations.
    - Run tests (or ask the LLM to update the tests) and commit the changes as subsequent commits to the same Git repository.
 2. **API Integration:**
-   - Update the FastAPI route. If "Option 3" is selected, run the full pipeline: Ingest -> Analyze -> Generate Code -> Apply Improvements -> Commit.
+   - Update the FastAPI route. If "Phase 3" is triggered, run the final pipeline: Apply Improvements -> Commit.
    - Return an HTMX response displaying the local path to the generated, enhanced Git repository.
 
 ## Phase 6: Refinement and Testing
