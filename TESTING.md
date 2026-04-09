@@ -15,15 +15,15 @@ This document outlines the testing approach for the Spite clean-room implementat
 ### 1.2 Analysis & Specification Generation (`test_analyze.py`)
 - **Target:** The "Dirty" agent logic that generates the `REQUIREMENTS.md`, `TESTING.md`, etc.
 - **Tests:**
-  - Mock the LLM provider (Ollama/OpenAI/Anthropic) to return a predefined, well-formatted Markdown string containing the five required sections.
-  - **Assert:** The parser correctly splits the LLM output into the five distinct specification files (including `IMPROVEMENTS.md`).
+  - Mock the LLM provider (Ollama/OpenAI/Anthropic) to return a predefined, well-formatted Markdown string containing the six required sections.
+  - **Assert:** The parser correctly splits the LLM output into the six distinct specification files (including `IMPROVEMENTS.md` and `DIRTY_BIBLIOGRAPHY.md`).
   - Test handling of malformed LLM responses (e.g., missing sections, invalid Markdown) with appropriate retries or error messages.
 
 ### 1.3 Zip Packaging (`test_package_zip.py`)
 - **Target:** The logic for Delivery Option 1 (Zip generation).
 - **Tests:**
   - Provide a dictionary of dummy Markdown strings (representing the specs).
-  - **Assert:** The function creates a valid `.zip` file in memory or a temp directory containing exactly five files with the correct names (`REQUIREMENTS.md`, `TESTING.md`, `IMPLEMENTATION_PLAN.md`, `AGENT_INSTRUCTIONS.md`, `IMPROVEMENTS.md`) and content.
+  - **Assert:** The function creates a valid `.zip` file in memory or a temp directory containing exactly six files with the correct names (`REQUIREMENTS.md`, `TESTING.md`, `IMPLEMENTATION_PLAN.md`, `AGENT_INSTRUCTIONS.md`, `IMPROVEMENTS.md`, `DIRTY_BIBLIOGRAPHY.md`) and content.
 
 ### 1.4 Git Repository Initialization (`test_package_git.py`)
 - **Target:** The setup phase for Delivery Option 2.
@@ -46,7 +46,7 @@ This document outlines the testing approach for the Spite clean-room implementat
 - **Assert:**
   - The "Clean" agent mock is called with the output of the "Dirty" agent mock.
   - A new local directory is created.
-  - The mocked generated code files are written to this directory.
+  - The mocked generated code files (including `CLEAN_BIBLIOGRAPHY.md`) are written to this directory.
   - The directory is a valid Git repository with a commit containing the new files.
   - The endpoint returns the path to this directory.
 
@@ -58,6 +58,7 @@ This document outlines the testing approach for the Spite clean-room implementat
   - The "Clean" agent mock is called sequentially: first with the spec output, then with the `IMPROVEMENTS.md` output.
   - A new local directory is created and initial code is written and committed.
   - The mocked enhanced code files are written to the directory, resulting in subsequent commits.
+  - The repository contains an updated `CLEAN_BIBLIOGRAPHY.md`.
   - The endpoint returns the path to this directory.
 
 ## 3. Web UI (HTMX) Tests

@@ -36,23 +36,24 @@ As a developer, I want Spite to not only recreate the project but also aggressiv
     -   `IMPLEMENTATION_PLAN.md`: A step-by-step guide for rebuilding the project from scratch.
     -   `AGENT_INSTRUCTIONS.md`: Specific prompts and constraints for the implementing AI agent.
     -   `IMPROVEMENTS.md`: Opportunities for improvement based on usage and features from public documentation and discussion forums (e.g., behavioral changes).
+    -   `DIRTY_BIBLIOGRAPHY.md`: A bibliography of sources considered by the Dirty agent (links and commentary).
 
 ### 4.2 Delivery Mechanisms
 #### Delivery Option 1: Zip Archive
--   Package the generated markdown files (`REQUIREMENTS.md`, `TESTING.md`, `IMPLEMENTATION_PLAN.md`, `AGENT_INSTRUCTIONS.md`, `IMPROVEMENTS.md`) into a structured `.zip` archive.
+-   Package the generated markdown files (`REQUIREMENTS.md`, `TESTING.md`, `IMPLEMENTATION_PLAN.md`, `AGENT_INSTRUCTIONS.md`, `IMPROVEMENTS.md`, `DIRTY_BIBLIOGRAPHY.md`) into a structured `.zip` archive.
 -   Provide the zip file for download via the web interface.
 
 #### Delivery Option 2: Local Git Working Directory
 -   Initialize a new, empty Git repository in a local temporary directory.
 -   Instantiate a new "Clean" AI agent session (e.g., via Ollama) with no prior context of the target repository.
 -   Feed the Clean agent the specifications generated in 4.1.
--   Execute an agentic loop (plan -> write code -> run tests -> iterate) until the implementation satisfies the `TESTING.md` plan.
--   Commit the final codebase to the local Git repository and present the directory path to the user.
+-   Execute an agentic loop (plan -> write code -> run tests -> iterate) until the implementation satisfies the `TESTING.md` plan. The Clean agent must also generate a `CLEAN_BIBLIOGRAPHY.md` detailing the sources it considered during implementation.
+-   Commit the final codebase (including `CLEAN_BIBLIOGRAPHY.md`) to the local Git repository and present the directory path to the user.
 
 #### Delivery Option 3: Enhanced Local Git Working Directory
 -   Execute all steps from Delivery Option 2 to establish a baseline clean-room implementation.
 -   Feed the Clean agent the `IMPROVEMENTS.md` document.
--   Execute a secondary agentic loop to apply the improvements, allowing for breaking changes to the original API or functionality if necessary to address user feedback.
+-   Execute a secondary agentic loop to apply the improvements, allowing for breaking changes to the original API or functionality if necessary to address user feedback. The Clean agent must update the `CLEAN_BIBLIOGRAPHY.md` to reflect new sources or reasoning.
 -   Commit the enhanced codebase as subsequent commits in the local Git repository and present the directory path to the user.
 
 ### 4.3 AI Integration

@@ -23,16 +23,16 @@ You must implement a strict architectural boundary between the "Dirty" and "Clea
 ### 2.2 Implement Delivery Options
 You must build three distinct delivery pipelines:
 - **Delivery Option 1 (Zip Plan Generation):**
-  - The system analyzes the target and generates five key files: `REQUIREMENTS.md`, `TESTING.md`, `IMPLEMENTATION_PLAN.md`, `AGENT_INSTRUCTIONS.md` (which are instructions for *another* agent to write the code), and `IMPROVEMENTS.md` (capturing opportunities for improvement based on usage and features).
+  - The system analyzes the target and generates six key files: `REQUIREMENTS.md`, `TESTING.md`, `IMPLEMENTATION_PLAN.md`, `AGENT_INSTRUCTIONS.md` (which are instructions for *another* agent to write the code), `IMPROVEMENTS.md` (capturing opportunities for improvement based on usage and features), and `DIRTY_BIBLIOGRAPHY.md` (links and commentary on sources considered by the analysis agent).
   - Package these into a `.zip` file and serve it to the user via the frontend.
 - **Delivery Option 2 (Full AI Implementation):**
   - The system performs the analysis above, but then automatically initializes a new local Git repository.
   - It instantiates a fresh, isolated AI session (the "Clean" agent) using the user's selected model (e.g., via Ollama).
-  - It feeds the generated specifications to this Clean agent and runs an execution loop to generate the code, write the files, and commit them to the new Git repository.
+  - It feeds the generated specifications to this Clean agent and runs an execution loop to generate the code, write the files, and commit them to the new Git repository. Ensure the Clean agent generates a `CLEAN_BIBLIOGRAPHY.md` file detailing the specifications and sources it used during implementation.
 - **Delivery Option 3 (AI Autonomous Recreation & Enhancement):**
   - After completing all steps in Delivery Option 2, the Clean agent is supplied with the generated `IMPROVEMENTS.md`.
   - It performs a secondary execution loop to aggressively apply these improvements to the codebase, which may include making breaking changes to the original API or functionality.
-  - It commits these enhancements to the local Git repository.
+  - It updates `CLEAN_BIBLIOGRAPHY.md` and commits these enhancements to the local Git repository.
 
 ### 2.3 Frontend Requirements (HTMX)
 - Build a clean, professional web interface. Avoid any satirical or "evil" tone; keep it strictly utilitarian and professional.
