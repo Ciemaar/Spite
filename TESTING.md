@@ -15,15 +15,15 @@ This document outlines the testing approach for the Spite clean-room implementat
 ### 1.2 Analysis & Specification Generation (`test_analyze.py`)
 - **Target:** The "Dirty" agent logic that generates the `REQUIREMENTS.md`, `TESTING.md`, etc.
 - **Tests:**
-  - Mock the LLM provider (Ollama/OpenAI/Anthropic) to return a predefined, well-formatted Markdown string containing the seven required sections.
-  - **Assert:** The parser correctly splits the LLM output into the seven distinct specification files (including `IMPROVEMENTS.md`, `DIRTY_BIBLIOGRAPHY.md`, and `SYSTEM_OVERVIEW.md`).
+  - Mock the LLM provider (Ollama/OpenAI/Anthropic) to return a predefined, well-formatted Markdown string containing the eight required sections.
+  - **Assert:** The parser correctly splits the LLM output into the eight distinct files (including `IMPROVEMENTS.md`, `DIRTY_BIBLIOGRAPHY.md`, `SYSTEM_OVERVIEW.md`, and `SOURCE_EXCLUDES.txt`).
   - Test handling of malformed LLM responses (e.g., missing sections, invalid Markdown) with appropriate retries or error messages.
 
 ### 1.3 Zip Packaging (`test_package_zip.py`)
 - **Target:** The logic for Phase 1 (Zip generation).
 - **Tests:**
   - Provide a dictionary of dummy Markdown strings (representing the specs).
-  - **Assert:** The function creates a valid `.zip` file in memory or a temp directory containing exactly seven files with the correct names (`REQUIREMENTS.md`, `TESTING.md`, `IMPLEMENTATION_PLAN.md`, `AGENT_INSTRUCTIONS.md`, `IMPROVEMENTS.md`, `DIRTY_BIBLIOGRAPHY.md`, `SYSTEM_OVERVIEW.md`) and content.
+  - **Assert:** The function creates a valid `.zip` file in memory or a temp directory containing exactly eight files with the correct names (`REQUIREMENTS.md`, `TESTING.md`, `IMPLEMENTATION_PLAN.md`, `AGENT_INSTRUCTIONS.md`, `IMPROVEMENTS.md`, `DIRTY_BIBLIOGRAPHY.md`, `SYSTEM_OVERVIEW.md`, `SOURCE_EXCLUDES.txt`) and content.
 
 ### 1.4 Git Repository Initialization (`test_package_git.py`)
 - **Target:** The setup logic for Phase 2.

@@ -22,12 +22,12 @@ This document breaks down the development of Spite into actionable, sequential s
    - Implement error handling for connection issues, rate limits, and context window exhaustion.
 3. **The "Dirty" Agent (`src/analyzer.py`):**
    - Construct a prompt that feeds the filtered documentation/types to the LLM, as well as any fetched public documentation and discussion forum context. The prompt must instruct the LLM to act as a clean-room specification writer.
-   - The prompt must mandate outputting exactly seven sections (or distinct JSON keys): Requirements, Testing Strategy, Implementation Plan, Agent Instructions, Improvements (opportunities for improvement based on usage and features, e.g., behavioral changes), a Dirty Bibliography (links and commentary on sources considered), and a System Overview (original descriptions and a proposed replacement name).
-   - Implement logic to parse this response into seven distinct Markdown strings (including `IMPROVEMENTS.md`, `DIRTY_BIBLIOGRAPHY.md`, and `SYSTEM_OVERVIEW.md`).
+   - The prompt must mandate outputting exactly eight sections (or distinct JSON keys): Requirements, Testing Strategy, Implementation Plan, Agent Instructions, Improvements (opportunities for improvement based on usage and features, e.g., behavioral changes), a Dirty Bibliography (links and commentary on sources considered), a System Overview (original descriptions and a proposed replacement name), and Source Excludes (a list of known original sources/URLs to avoid).
+   - Implement logic to parse this response into eight distinct files (including `IMPROVEMENTS.md`, `DIRTY_BIBLIOGRAPHY.md`, `SYSTEM_OVERVIEW.md`, and `SOURCE_EXCLUDES.txt`).
 
 ## Phase 3: Delivery Mechanism 1 (Phase 1 - Zip Generation)
 1. **Packaging Module (`src/packager.py`):**
-   - Implement a function `create_zip_payload(specs_dict)`. It should take the seven Markdown strings from the Analyzer and create an in-memory `.zip` file (using Python's `zipfile` module).
+   - Implement a function `create_zip_payload(specs_dict)`. It should take the eight distinct files from the Analyzer and create an in-memory `.zip` file (using Python's `zipfile` module).
 2. **API Integration:**
    - Update the FastAPI route handling the form submission. If "Phase 1" is the target, trigger the Ingest -> Analyze -> Package pipeline.
    - Return the generated `.zip` file to the user as a downloadable response, alongside a UI button to "Proceed to Phase 2".
@@ -38,6 +38,7 @@ This document breaks down the development of Spite into actionable, sequential s
    - In `src/packager.py`, add a function `init_local_repo()`. This should create a new temporary directory on the local filesystem and run `git init`.
 2. **The "Clean" Agent (`src/generator.py`):**
    - Instantiate a *new, fresh* LLM session. Do not pass any context from the "Dirty" agent other than the generated Markdown specifications.
+   - Explicitly configure the LLM session with a blocklist built from `SOURCE_EXCLUDES.txt` to strictly prevent it from querying, browsing, or referencing the original source code or repository.
    - Construct a prompt instructing the LLM to act as the implementing developer. Provide it with the generated `IMPLEMENTATION_PLAN.md` and `REQUIREMENTS.md`.
    - Implement an agentic loop (if necessary) or a single-shot generation if the task is simple enough, asking the LLM to output file paths and corresponding file contents.
    - Ensure the Clean agent is instructed to generate a `CLEAN_BIBLIOGRAPHY.md` file detailing the sources and specs it considered during implementation.

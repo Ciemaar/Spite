@@ -21,6 +21,7 @@ Spite aims to replicate this workflow locally using AI, specifically leveraging 
 3. **Delivery Mechanisms:**
    - **Phase 1 (Zip Plan Generation):** Spite stops after the analysis phase. It packages the generated specifications into a `.zip` archive. A human developer can then use an agentic coding tool (like Copilot, Cursor, or Claude Code) to implement the specifications. This guarantees a clean-room break, as the agentic tool only sees the spec.
    - **Phase 2 (Full AI Implementation):** Spite passes the specifications to a new, isolated LLM session (with no context of the original repository). This session autonomously writes the code, initializes a new local Git repository, and commits the result.
+   - **Phase 3 (Enhanced AI Implementation):** Spite performs an additional enhancement loop on the clean-room codebase, autonomously applying the generated improvement suggestions, even if they result in breaking API changes compared to the original dependency.
 
 ## Existing AI-Assisted Rewrite Tools
 - **Aider / Cursor:** These tools directly modify the codebase. They don't naturally enforce a clean-room boundary unless explicitly prompted to do so across separate sessions.
