@@ -4,7 +4,7 @@
 Spite is a local, AI-powered "Clean Room" development tool designed to safely re-implement open-source projects or dependencies without incurring original license obligations. Spite uses local AI models (e.g., via Ollama) to analyze the public interfaces of a target project and independently recreate a functionally equivalent, legally distinct version.
 
 ## 2. Core Principles
-1.  **Isolation (The Clean Room):** The AI agent that analyzes the target repository (the "Dirty" agent) must never communicate its findings directly to the AI agent that implements the new code (the "Clean" agent).
+1.  **Isolation (The Clean Room):** The AI agent that analyzes the target repository (the "Dirty" agent) must never communicate implementation details or source code to the AI agent that implements the new code (the "Clean" agent). A restricted Q&A channel is permitted during implementation, strictly limited to clarifying observable, public behavior.
 2.  **Specification-Driven:** The Dirty agent produces a strict, comprehensive set of requirements, tests, and an implementation plan based *only* on the target's public documentation, API specifications, and exported types. It must *not* read or copy the implementation details (source code).
 3.  **Local Execution:** Prioritize privacy and security by defaulting to local LLMs (e.g., via Ollama), with the option to use user-provided AI service keys (OpenAI, Anthropic).
 
@@ -52,8 +52,10 @@ The system should support a workflow where I can review the output of Phase 1 an
 -   Instantiate a new "Clean" AI agent session (e.g., via Ollama) with no prior context of the target repository.
 -   Configure the Clean agent with an explicit blocklist using `SOURCE_EXCLUDES.txt` to guarantee it cannot query, browse, or reference the original source code or repository.
 -   Feed the Clean agent the specifications generated in 4.1.
--   Execute an agentic loop (plan -> write code -> run tests -> iterate) until the implementation satisfies the `TESTING.md` plan. The Clean agent must explicitly state it has not used original sources and generate a `CLEAN_BIBLIOGRAPHY.md` detailing the valid sources it considered during implementation.
--   Commit the final codebase (including `CLEAN_BIBLIOGRAPHY.md`) to the local Git repository and present the directory path to the user.
+-   Execute an agentic loop (plan -> write code -> run tests -> iterate) until the implementation satisfies the `TESTING.md` plan.
+-   During this loop, permit a restricted Q&A channel where the Clean agent can query the Dirty agent to clarify observable, public behavior. These interactions must be logged.
+-   The Clean agent must explicitly state it has not used original sources and generate a `CLEAN_BIBLIOGRAPHY.md` detailing the valid sources it considered during implementation.
+-   Commit the final codebase (including `CLEAN_BIBLIOGRAPHY.md` and a `CLEAN_DIRTY_QA_LOG.md` detailing the Q&A interactions) to the local Git repository and present the directory path to the user.
 -   Provide a UI affordance to continue to Phase 3.
 
 #### Phase 3: Enhanced Local Git Working Directory
@@ -83,7 +85,7 @@ While the MVP focuses on GitHub repository URLs, the architecture must support f
 -   **Stage 3:** Cargo (Rust), Go Modules, Maven (Java).
 
 ## 6. Non-Functional Requirements
--   **Performance:** The extraction and analysis phase should complete within minutes, depending on the target size and local LLM speed.
+-   **Performance:** The extraction and analysis phase may take hours to complete, depending on the target size, local LLM speed, and extent of web search/documentation analysis required.
 -   **Reliability:** The system must handle rate limits gracefully (especially when fetching from GitHub).
 -   **Security:** Never execute arbitrary code fetched from the target repository. The "Dirty" room must only perform static analysis.
 

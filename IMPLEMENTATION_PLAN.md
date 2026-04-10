@@ -40,11 +40,13 @@ This document breaks down the development of Spite into actionable, sequential s
    - Instantiate a *new, fresh* LLM session. Do not pass any context from the "Dirty" agent other than the generated Markdown specifications.
    - Explicitly configure the LLM session with a blocklist built from `SOURCE_EXCLUDES.txt` to strictly prevent it from querying, browsing, or referencing the original source code or repository.
    - Construct a prompt instructing the LLM to act as the implementing developer. Provide it with the generated `IMPLEMENTATION_PLAN.md` and `REQUIREMENTS.md`.
+   - Establish a messaging interface between the Clean and Dirty agents. Instruct the Dirty agent to only answer questions pertaining to public/observable behavior (rejecting any implementation detail queries), and instruct the Clean agent to only ask such questions.
    - Implement an agentic loop (if necessary) or a single-shot generation if the task is simple enough, asking the LLM to output file paths and corresponding file contents.
    - Ensure the Clean agent is instructed to generate a `CLEAN_BIBLIOGRAPHY.md` file detailing the sources and specs it considered during implementation.
+   - The backend must log all Q&A interactions between the agents and generate a `CLEAN_DIRTY_QA_LOG.md` file.
 3. **Execution & Committing:**
    - Parse the LLM's code output.
-   - Write the generated files to the newly initialized Git directory.
+   - Write the generated files (including `CLEAN_DIRTY_QA_LOG.md`) to the newly initialized Git directory.
    - Run `git add .` and `git commit -m "Initial clean-room implementation"`.
 4. **API Integration:**
    - Update the FastAPI route. If "Phase 2" is the target, ensure Phase 1 is complete, then trigger: Generate Code -> Commit.

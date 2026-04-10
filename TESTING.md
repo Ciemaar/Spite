@@ -42,11 +42,11 @@ This document outlines the testing approach for the Spite clean-room implementat
 ### 2.2 Full Phase 2 Pipeline (Git Generation)
 - **Goal:** Verify the end-to-end flow of generating the code and committing it to a local Git repository, *without* relying on a live LLM.
 - **Setup:** Use a mocked GitHub client and a mocked LLM client for *both* the "Dirty" and "Clean" agents.
-- **Execution:** Trigger the main Spite API endpoint for Phase 2.
+- **Execution:** Trigger the main Spite API endpoint for Phase 2. Simulate a Q&A interaction between the Clean and Dirty agent mocks.
 - **Assert:**
   - The "Clean" agent mock is called with the output of the "Dirty" agent mock.
   - A new local directory is created.
-  - The mocked generated code files (including `CLEAN_BIBLIOGRAPHY.md`) are written to this directory.
+  - The mocked generated code files (including `CLEAN_BIBLIOGRAPHY.md` and `CLEAN_DIRTY_QA_LOG.md`) are written to this directory.
   - The directory is a valid Git repository with a commit containing the new files.
   - The endpoint returns the path to this directory.
 
