@@ -7,7 +7,8 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from spite.stream import ProgressStream  # pyright: ignore
+
+from spite.stream import ProgressStream  # type: ignore
 
 # Global dict to store active streams (in a real app, use Redis/pubsub)
 # For simplicity in this agentic implementation, we use a simple dict mapping to a stream.
