@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spite</title>
+    <!-- PicoCSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <!-- SSE support for HTMX -->
+    <script src="https://unpkg.com/htmx.org/dist/ext/sse.js"></script>
+</head>
+<body>
+    <main class="container">
+        <h1>Spite: Agentic Cleanroom</h1>
+        <p>Re-implement public repositories autonomously.</p>
+
+        <form hx-post="/process" hx-target="#result" hx-indicator="#spinner">
+            <fieldset>
+                <legend>Target Repository</legend>
+                <label>
+                    GitHub URL
+                    <input type="url" name="github_url" placeholder="https://github.com/owner/repo" required>
+                </label>
+            </fieldset>
+
+            <fieldset>
+                <legend>Context</legend>
+                <label>
+                    Supplemental URLs (comma separated)
+                    <textarea name="supplemental_urls" placeholder="https://docs.example.com, ..."></textarea>
+                </label>
+                <label>
+                    <input type="checkbox" name="web_search" checked>
+                    Enable automated web search for context
+                </label>
+            </fieldset>
+
+            <fieldset>
+                <legend>AI Provider</legend>
+                <label>
+                    Provider
+                    <select name="ai_provider">
+                        <option value="ollama">Local (Ollama)</option>
+                    </select>
+                </label>
+                <label>
+                    Model
+                    <input type="text" name="ai_model" value="llama3" required>
+                </label>
+            </fieldset>
+
+            <fieldset>
+                <legend>Target Phase</legend>
+                <label>
+                    <input type="radio" name="target_phase" value="1" checked>
+                    Phase 1: Generate Specifications (.zip)
+                </label>
+                <label>
+                    <input type="radio" name="target_phase" value="2">
+                    Phase 2: Full Local Git Implementation
+                </label>
+                <label>
+                    <input type="radio" name="target_phase" value="3">
+                    Phase 3: Enhanced AI Implementation
+                </label>
+            </fieldset>
+
+            <button type="submit">Start Process</button>
+        </form>
+
+        <div id="spinner" class="htmx-indicator" aria-busy="true">Processing...</div>
+        <div id="result"></div>
+        <div id="progress" hx-ext="sse" sse-connect="/stream" sse-swap="message"></div>
+    </main>
+</body>
+</html>
