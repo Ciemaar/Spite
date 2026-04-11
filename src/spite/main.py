@@ -59,6 +59,7 @@ async def process(
     target_phase: Annotated[str, Form()],
     supplemental_urls: Annotated[str, Form()] = "",
     web_search: Annotated[bool, Form()] = False,
+    additional_instructions: Annotated[str, Form()] = "",
 ) -> StreamingResponse | HTMLResponse:
     """Handle the main form submission via HTMX."""
     logger.info(
@@ -92,6 +93,13 @@ async def process(
         specs = await dirty_agent.analyze(
             repo_files, supplemental_content, search_context
         )
+
+        # Inject additional instructions
+        if additional_instructions.strip():
+            if "AGENTS.md" in specs:
+                specs["AGENTS.md"] += "\n\n## Additional Instructions\n\n" + additional_instructions.strip()
+            else:
+                specs["AGENTS.md"] = "# Agent Instructions\n\n## Additional Instructions\n\n" + additional_instructions.strip()
 
         # Packaging
         if target_phase == "1":
