@@ -52,7 +52,7 @@ async def stream_events():
     return StreamingResponse(global_stream.get_stream(), media_type="text/event-stream")
 
 
-@app.post("/process")
+@app.post("/process", response_model=None)
 async def process(
     github_url: Annotated[str, Form()],
     ai_provider: Annotated[str, Form()],
