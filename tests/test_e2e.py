@@ -23,6 +23,35 @@ def mock_llm():
         instance = MockLLM.return_value
         yield instance
 
+def test_process_phase_1(mock_ingestor, mock_llm):
+    mock_specs = {
+        "REQUIREMENTS.md": "Fake reqs",
+        "IMPLEMENTATION_PLAN.md": "Fake plan",
+        "AGENTS.md": "Fake instructions",
+    }
+
+    with patch("spite.analyzer.DirtyAgent") as MockDirty:
+        dirty_instance = MockDirty.return_value
+        dirty_instance.analyze = AsyncMock(return_value=mock_specs)
+
+        response = client.post(
+            "/process",
+            data={
+                "github_url": "https://github.com/fake/repo",
+                "ai_provider": "ollama",
+                "ai_model": "llama3",
+                "target_phase": "1",
+                "supplemental_urls": "",
+                "web_search": False,
+                "additional_instructions": "",
+            }
+        )
+
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/x-zip-compressed"
+        assert "attachment; filename=spite_specs.zip" in response.headers["content-disposition"]
+        assert len(response.content) > 0
+
 def test_process_phase_2(mock_ingestor, mock_llm):
     # Mock Dirty Agent output
     mock_specs = {
