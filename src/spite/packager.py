@@ -12,7 +12,10 @@ def create_zip_payload(specs: dict[str, str]) -> io.BytesIO:
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
         for filename, content in specs.items():
-            zip_file.writestr(filename, content)
+            # Prevent path traversal vulnerabilities
+            safe_filename = Path(filename).name
+            if safe_filename:
+                zip_file.writestr(safe_filename, content)
     zip_buffer.seek(0)
     return zip_buffer
 

@@ -88,6 +88,23 @@ class IngestionManager:
         results: dict[str, str] = {}
         for url in urls:
             try:
+                parsed = urlparse(url)
+                # SSRF prevention: only allow http/https and check for local IPs
+                if parsed.scheme not in ("http", "https"):
+                    logger.warning(f"Skipping non-http URL: {url}")
+                    continue
+
+                import socket
+                try:
+                    if not parsed.hostname:
+                        continue
+                    ip = socket.gethostbyname(parsed.hostname)
+                    if ip.startswith("127.") or ip.startswith("10.") or ip.startswith("192.168.") or ip.startswith("172.") or ip.startswith("169.254.") or ip.startswith("0."):
+                        logger.warning(f"Skipping local/private IP for URL: {url}")
+                        continue
+                except Exception:
+                    pass
+
                 resp = await self.client.get(url)
                 if resp.status_code == 200:
                     results[url] = resp.text

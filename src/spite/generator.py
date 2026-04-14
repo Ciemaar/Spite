@@ -120,9 +120,20 @@ class CleanAgent:
         return files
 
     def _write_files(self, files: dict[str, str], repo_path: Path) -> None:
-        """Write the files to the local repository directory."""
+        """Write the files to the local repository directory securely."""
         for filepath, content in files.items():
-            full_path = repo_path / filepath
+            # Prevent Path Traversal
+            # Resolve removes '..' but we must ensure it's still inside repo_path
+            try:
+                full_path = (repo_path / filepath).resolve()
+                repo_path = repo_path.resolve()
+                if not str(full_path).startswith(str(repo_path)):
+                    logger.warning(f"Path traversal attempted: {filepath}")
+                    continue
+            except ValueError:
+                logger.warning(f"Invalid path encountered: {filepath}")
+                continue
+
             full_path.parent.mkdir(parents=True, exist_ok=True)
             with open(full_path, "w", encoding="utf-8") as f:
                 f.write(content)
