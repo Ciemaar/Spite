@@ -53,8 +53,38 @@ class DirtyAgent:
 
         user_prompt = "Context to analyze:\n\n" + "\n\n".join(context_parts)
 
-        response = await self.llm.generate_response(system_prompt, user_prompt)
-        return self._parse_files(response)
+        required_files = {
+            "REQUIREMENTS.md",
+            "TESTING.md",
+            "IMPLEMENTATION_PLAN.md",
+            "AGENTS.md",
+            "IMPROVEMENTS.md",
+            "DIRTY_BIBLIOGRAPHY.md",
+            "SYSTEM_OVERVIEW.md",
+            "SOURCE_EXCLUDES.txt",
+        }
+
+        # Try up to 3 times to get all 8 files
+        max_retries = 3
+        for attempt in range(max_retries):
+            response = await self.llm.generate_response(system_prompt, user_prompt)
+            files = self._parse_files(response)
+
+            missing = required_files - set(files.keys())
+            if not missing:
+                return files
+
+            logger.warning(
+                f"Attempt {attempt + 1}: Missing {len(missing)} required files: {missing}. Retrying..."
+            )
+
+            # Append feedback to prompt to guide the LLM to provide the missing files
+            user_prompt += f"\n\nERROR: You failed to output the following required files: {missing}.\n"
+            user_prompt += "Please try again and ensure you output EXACTLY all 8 required files."
+
+        raise ValueError(
+            f"Dirty agent failed to generate all required specifications after {max_retries} attempts."
+        )
 
     def _parse_files(self, llm_output: str) -> dict[str, str]:
         """Parse the Markdown codeblocks with filepaths into a dictionary."""

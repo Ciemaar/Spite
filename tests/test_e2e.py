@@ -28,6 +28,11 @@ def test_process_phase_1(mock_ingestor, mock_llm):
         "REQUIREMENTS.md": "Fake reqs",
         "IMPLEMENTATION_PLAN.md": "Fake plan",
         "AGENTS.md": "Fake instructions",
+        "TESTING.md": "Fake testing",
+        "IMPROVEMENTS.md": "Fake improvements",
+        "DIRTY_BIBLIOGRAPHY.md": "Fake bibliography",
+        "SYSTEM_OVERVIEW.md": "Fake overview",
+        "SOURCE_EXCLUDES.txt": "Fake excludes",
     }
 
     with patch("spite.analyzer.DirtyAgent") as MockDirty:
@@ -58,8 +63,11 @@ def test_process_phase_2(mock_ingestor, mock_llm):
         "REQUIREMENTS.md": "Fake reqs",
         "IMPLEMENTATION_PLAN.md": "Fake plan",
         "AGENTS.md": "Fake instructions",
-        "SYSTEM_OVERVIEW.md": "Fake overview",
+        "TESTING.md": "Fake testing",
         "IMPROVEMENTS.md": "Fake improvements",
+        "DIRTY_BIBLIOGRAPHY.md": "Fake bibliography",
+        "SYSTEM_OVERVIEW.md": "Fake overview",
+        "SOURCE_EXCLUDES.txt": "Fake excludes",
     }
 
     with patch("spite.analyzer.DirtyAgent") as MockDirty:
@@ -102,7 +110,16 @@ def test_process_phase_2(mock_ingestor, mock_llm):
                     assert "Do a good job." in called_specs["AGENTS.md"]
 
 def test_process_phase_3(mock_ingestor, mock_llm):
-    mock_specs = {"AGENTS.md": ""}
+    mock_specs = {
+        "REQUIREMENTS.md": "Fake reqs",
+        "IMPLEMENTATION_PLAN.md": "Fake plan",
+        "AGENTS.md": "Fake instructions",
+        "TESTING.md": "Fake testing",
+        "IMPROVEMENTS.md": "Fake improvements",
+        "DIRTY_BIBLIOGRAPHY.md": "Fake bibliography",
+        "SYSTEM_OVERVIEW.md": "Fake overview",
+        "SOURCE_EXCLUDES.txt": "Fake excludes",
+    }
 
     with patch("spite.analyzer.DirtyAgent") as MockDirty:
         dirty_instance = MockDirty.return_value
