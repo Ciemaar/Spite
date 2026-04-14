@@ -10,10 +10,13 @@ logger = logging.getLogger(__name__)
 class CleanAgent:
     """The agent responsible for implementing the clean-room codebase."""
 
-    def __init__(self, llm: LLMInterface, dirty_llm: LLMInterface):
+    def __init__(
+        self, llm: LLMInterface, dirty_llm: LLMInterface, max_turns: int = 3
+    ):
         """Initialize the clean agent with its own LLM and access to the dirty LLM."""
         self.llm = llm
         self.dirty_llm = dirty_llm
+        self.max_turns = max_turns
         self.qa_log: list[str] = []
 
     async def generate_codebase(self, specs: dict[str, str], repo_path: Path) -> None:
@@ -36,8 +39,7 @@ class CleanAgent:
         user_prompt = f"Requirements:\n{requirements}\n\nPlan:\n{implementation_plan}\n\nInstructions:\n{agents_instructions}\n"
 
         # Q&A Loop
-        max_turns = 3
-        for turn in range(max_turns):
+        for turn in range(self.max_turns):
             logger.info(f"Clean Agent turn {turn + 1}")
             response = await self.llm.generate_response(system_prompt, user_prompt)
 

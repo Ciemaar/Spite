@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     ollama_host: str = "http://localhost:11434"
+    max_qa_turns: int = 3
 
 settings = Settings()
 
@@ -119,7 +120,7 @@ async def process(
         from .packager import init_local_repo
 
         repo_path = init_local_repo()
-        clean_agent = CleanAgent(llm=llm, dirty_llm=llm)
+        clean_agent = CleanAgent(llm=llm, dirty_llm=llm, max_turns=settings.max_qa_turns)
 
         await clean_agent.generate_codebase(specs, repo_path)
 
