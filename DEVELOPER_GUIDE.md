@@ -11,7 +11,22 @@ Spite is built with a strictly `src`-based layout using FastAPI and `uv`.
 
 ## Testing
 
-Run tests using `uv run tox` or `uv run pytest`.
+Spite relies on `pytest` for unit/integration testing and `tox` for automated environment isolation and testing.
+
+To get started and run the test suite locally during development:
+
+1. Install the development dependencies, which include the testing tools:
+   ```bash
+   uv sync --all-extras --dev
+   ```
+1. You can run the entire test suite, alongside `ruff` linting and `pyright` type-checking, by using `tox`:
+   ```bash
+   uv run tox
+   ```
+1. Alternatively, for a faster iterative loop, you can run `pytest` directly:
+   ```bash
+   uv run pytest
+   ```
 
 ## Running E2E Tests (Unmocked)
 
