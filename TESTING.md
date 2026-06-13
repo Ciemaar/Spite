@@ -5,6 +5,7 @@ This document outlines the testing approach for the Spite clean-room implementat
 ## 1. Unit Tests
 
 ### 1.1 Ingestion & Filtering (`test_ingest.py`)
+
 - **Target:** The module responsible for fetching from GitHub, filtering files, and fetching supplemental external URLs/web search results.
 - **Tests:**
   - Mock the GitHub API response to simulate a repository with a mix of source code (e.g., `main.py`, `utils.ts`), documentation (`README.md`, `CONTRIBUTING.md`), and type definitions (`index.d.ts`, `__init__.pyi`).
@@ -13,6 +14,7 @@ This document outlines the testing approach for the Spite clean-room implementat
   - Test rate limit handling and error reporting for non-existent repositories or unreachable URLs.
 
 ### 1.2 Analysis & Specification Generation (`test_analyze.py`)
+
 - **Target:** The "Dirty" agent logic that generates the `REQUIREMENTS.md`, `TESTING.md`, etc.
 - **Tests:**
   - Mock the LLM provider (Ollama/OpenAI/Anthropic) to return a predefined, well-formatted Markdown string containing the eight required sections.
@@ -20,12 +22,14 @@ This document outlines the testing approach for the Spite clean-room implementat
   - Test handling of malformed LLM responses (e.g., missing sections, invalid Markdown) with appropriate retries or error messages.
 
 ### 1.3 Zip Packaging (`test_package_zip.py`)
+
 - **Target:** The logic for Phase 1 (Zip generation).
 - **Tests:**
   - Provide a dictionary of dummy Markdown strings (representing the specs).
   - **Assert:** The function creates a valid `.zip` file in memory or a temp directory containing exactly eight files with the correct names (`REQUIREMENTS.md`, `TESTING.md`, `IMPLEMENTATION_PLAN.md`, `AGENT_INSTRUCTIONS.md`, `IMPROVEMENTS.md`, `DIRTY_BIBLIOGRAPHY.md`, `SYSTEM_OVERVIEW.md`, `SOURCE_EXCLUDES.txt`) and content.
 
 ### 1.4 Git Repository Initialization (`test_package_git.py`)
+
 - **Target:** The setup logic for Phase 2.
 - **Tests:**
   - Provide a target directory path.
@@ -34,12 +38,14 @@ This document outlines the testing approach for the Spite clean-room implementat
 ## 2. Integration Tests
 
 ### 2.1 Full Phase 1 Pipeline (Zip Generation)
+
 - **Goal:** Verify the end-to-end flow from receiving a GitHub URL to producing the Zip file, *without* relying on a live LLM.
 - **Setup:** Use a mocked GitHub client and a mocked LLM client.
 - **Execution:** Trigger the main Spite API endpoint for Phase 1.
 - **Assert:** The endpoint returns a `200 OK` and a valid `.zip` file download containing the mocked specifications.
 
 ### 2.2 Full Phase 2 Pipeline (Git Generation)
+
 - **Goal:** Verify the end-to-end flow of generating the code and committing it to a local Git repository, *without* relying on a live LLM.
 - **Setup:** Use a mocked GitHub client and a mocked LLM client for *both* the "Dirty" and "Clean" agents.
 - **Execution:** Trigger the main Spite API endpoint for Phase 2. Simulate a Q&A interaction between the Clean and Dirty agent mocks.
@@ -51,6 +57,7 @@ This document outlines the testing approach for the Spite clean-room implementat
   - The endpoint returns the path to this directory.
 
 ### 2.3 Full Phase 3 Pipeline (Enhanced Git Generation)
+
 - **Goal:** Verify the end-to-end flow of generating the code, applying improvements, and committing to a local Git repository, *without* relying on a live LLM.
 - **Setup:** Use a mocked GitHub client and a mocked LLM client for *both* the "Dirty" and "Clean" agents.
 - **Execution:** Trigger the main Spite API endpoint for Phase 3.
@@ -64,6 +71,7 @@ This document outlines the testing approach for the Spite clean-room implementat
 ## 3. Web UI (HTMX) Tests
 
 ### 3.1 Endpoint Validation (`test_web.py`)
+
 - **Target:** The FastAPI/Flask routes serving the HTMX frontend.
 - **Tests:**
   - **GET `/`:** Assert it returns a 200 status code and contains the expected HTML form elements (URL input, supplemental URL input, AI provider select, Target Phase selector including Phase 3).
@@ -75,9 +83,9 @@ This document outlines the testing approach for the Spite clean-room implementat
 Because Spite's core value is legal and architectural isolation, automated tests cannot fully prove the "clean room" guarantee. A manual verification process is required:
 
 1. **Select a Target:** Choose a small, open-source library with clear documentation and a specific license (e.g., a simple string manipulation library in Python).
-2. **Run Phase 1:** Use Spite to generate the Zip file of specifications.
-3. **Audit Specs:** Manually review the `REQUIREMENTS.md` and `IMPLEMENTATION_PLAN.md`. Verify that they contain *no copied source code* or implementation-specific logic from the original library, only interface descriptions and behavioral requirements.
-4. **Run Phase 2:** Use Spite (with a real local Ollama model) to fully recreate the library.
-5. **Audit Code:** Manually review the generated codebase. Compare it to the original library. Ensure it is functionally equivalent (write a quick script to test both libraries against the same inputs) but structurally distinct.
-6. **Verify Git History:** Check the generated Git repository to ensure only the newly created code is present in the history, with no traces of the original target's repository.
-7. **Run Phase 3:** Run the system continuing to Phase 3 and perform the same audit, ensuring that the generated `IMPROVEMENTS.md` have been effectively implemented into the new codebase and history accurately reflects these enhancement commits.
+1. **Run Phase 1:** Use Spite to generate the Zip file of specifications.
+1. **Audit Specs:** Manually review the `REQUIREMENTS.md` and `IMPLEMENTATION_PLAN.md`. Verify that they contain *no copied source code* or implementation-specific logic from the original library, only interface descriptions and behavioral requirements.
+1. **Run Phase 2:** Use Spite (with a real local Ollama model) to fully recreate the library.
+1. **Audit Code:** Manually review the generated codebase. Compare it to the original library. Ensure it is functionally equivalent (write a quick script to test both libraries against the same inputs) but structurally distinct.
+1. **Verify Git History:** Check the generated Git repository to ensure only the newly created code is present in the history, with no traces of the original target's repository.
+1. **Run Phase 3:** Run the system continuing to Phase 3 and perform the same audit, ensuring that the generated `IMPROVEMENTS.md` have been effectively implemented into the new codebase and history accurately reflects these enhancement commits.
