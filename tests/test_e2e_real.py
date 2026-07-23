@@ -22,7 +22,7 @@ def test_real_process_phase_2():
         data={
             "github_url": "https://github.com/octocat/Hello-World",
             "ai_provider": "ollama",
-            "ai_model": "minimax-m2.7",  # Assuming minimax-m2.7 is pulled locally
+            "ai_model": "llama3",  # Assuming llama3 is pulled locally
             "target_phase": "2",
             "supplemental_urls": "",
             "web_search": False,

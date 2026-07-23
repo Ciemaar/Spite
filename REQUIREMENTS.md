@@ -79,7 +79,7 @@ The system should support a workflow where I can review the output of Phase 1 an
 
 ### 4.3 AI Integration
 
-- **Ollama (Primary):** Integrate with a locally running Ollama instance via its REST API. Allow the user to specify the model name (e.g., `minimax-m2.7`, `qwen2.5-coder`, `llama3`).
+- **Ollama (Primary):** Integrate with a locally running Ollama instance via its REST API. Allow the user to specify the model name (e.g., `llama3`, `qwen2.5-coder`).
 - **Cloud Providers (Secondary):** Support user-provided API keys for OpenAI (GPT-4o) and Anthropic (Claude 3.5 Sonnet) as fallback or premium options.
 
 ### 4.4 Web Interface (HTMX + Python Backend)
