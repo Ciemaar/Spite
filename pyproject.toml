@@ -94,3 +94,6 @@ addopts = "-ra -q"
 testpaths = [
     "tests",
 ]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15

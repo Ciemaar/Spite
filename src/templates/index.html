@@ -18,10 +18,30 @@
 
         <form hx-post="/process" hx-target="#result" hx-indicator="#spinner" hx-disabled-elt="button[type='submit']">
             <fieldset>
+                <legend>Target Mode</legend>
+                <label>
+                    <input type="radio" name="target_mode" value="repo" checked onchange="toggleMode()">
+                    GitHub Repository
+                </label>
+                <label>
+                    <input type="radio" name="target_mode" value="description" onchange="toggleMode()">
+                    Public Description (URL/Text)
+                </label>
+            </fieldset>
+
+            <fieldset id="repo_fieldset">
                 <legend>Target Repository</legend>
                 <label>
                     GitHub URL
-                    <input type="url" name="github_url" placeholder="https://github.com/owner/repo" required>
+                    <input type="url" name="github_url" id="github_url" placeholder="https://github.com/owner/repo" required>
+                </label>
+            </fieldset>
+
+            <fieldset id="description_fieldset" style="display: none;">
+                <legend>Public Description</legend>
+                <label>
+                    Description or URL
+                    <textarea name="public_description" id="public_description" placeholder="Provide a detailed public description of the software or a URL to scrape..."></textarea>
                 </label>
             </fieldset>
 
@@ -88,6 +108,26 @@
         const clientId = crypto.randomUUID();
         document.getElementById('client_id_input').value = clientId;
         document.getElementById('progress').setAttribute('sse-connect', '/stream/' + clientId);
+
+        function toggleMode() {
+            const mode = document.querySelector('input[name="target_mode"]:checked').value;
+            const repoFieldset = document.getElementById('repo_fieldset');
+            const descFieldset = document.getElementById('description_fieldset');
+            const githubUrl = document.getElementById('github_url');
+            const publicDesc = document.getElementById('public_description');
+
+            if (mode === 'repo') {
+                repoFieldset.style.display = 'block';
+                descFieldset.style.display = 'none';
+                githubUrl.required = true;
+                publicDesc.required = false;
+            } else {
+                repoFieldset.style.display = 'none';
+                descFieldset.style.display = 'block';
+                githubUrl.required = false;
+                publicDesc.required = true;
+            }
+        }
     </script>
 </body>
 </html>
