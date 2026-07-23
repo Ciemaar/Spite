@@ -1,6 +1,7 @@
+import json
 import logging
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
@@ -24,6 +25,7 @@ class Settings(BaseSettings):
 
     ollama_host: str = "http://localhost:11434"
     max_qa_turns: int = 3
+    models_config_path: str = "models.json"
 
 
 settings = Settings()
@@ -43,10 +45,27 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 
+def load_models_config() -> dict[str, Any]:
+    """Load the models configuration from the JSON file."""
+    config_path = Path(settings.models_config_path)
+    if config_path.exists():
+        try:
+            with open(config_path, encoding="utf-8") as f:
+                return json.load(f)  # pyright: ignore
+        except Exception as e:
+            logger.error(f"Error loading models config: {e}")
+    return {"default_model": "llama3", "models": [{"id": "llama3", "name": "Llama 3 (8B)", "description": ""}]}
+
+
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request) -> HTMLResponse:
     """Render the main index page."""
-    return templates.TemplateResponse(request=request, name="index.html")
+    models_config = load_models_config()
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={"models_config": models_config}
+    )
 
 
 @app.get("/stream/{client_id}")

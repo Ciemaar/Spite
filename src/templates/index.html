@@ -55,7 +55,13 @@
                 </label>
                 <label>
                     Model
-                    <input type="text" name="ai_model" value="llama3" required>
+                    <select name="ai_model" required>
+                        {% for model in models_config.models %}
+                        <option value="{{ model.id }}" {% if model.id == models_config.default_model %}selected{% endif %}>
+                            {{ model.name }} - {{ model.description }}
+                        </option>
+                        {% endfor %}
+                    </select>
                 </label>
             </fieldset>
 

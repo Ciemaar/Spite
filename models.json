@@ -1,0 +1,25 @@
+{
+  "default_model": "llama3",
+  "models": [
+    {
+      "id": "llama3",
+      "name": "Llama 3 (8B)",
+      "description": "General reasoning and instruction following. Tight fit on 6GB VRAM."
+    },
+    {
+      "id": "qwen2.5-coder",
+      "name": "Qwen 2.5 Coder (7B)",
+      "description": "Excellent for coding tasks. Tight fit on 6GB VRAM."
+    },
+    {
+      "id": "phi-4-mini-instruct",
+      "name": "Phi-4-mini-instruct (3.8B)",
+      "description": "Safe bet. Runs very fast with low VRAM footprint."
+    },
+    {
+      "id": "qwopus-3.5-coder-4b",
+      "name": "Qwopus-3.5-Coder (4B)",
+      "description": "Safe bet for coding. Fast and leaves headroom for larger context."
+    }
+  ]
+}
