@@ -44,7 +44,7 @@ def test_process_phase_1(mock_ingestor, mock_llm):
             data={
                 "github_url": "https://github.com/fake/repo",
                 "ai_provider": "ollama",
-                "ai_model": "llama3",
+                "ai_model": "minimax-m2.7",
                 "target_phase": "1",
                     "client_id": "test-client-id",
                 "supplemental_urls": "",
@@ -91,7 +91,7 @@ def test_process_phase_2(mock_ingestor, mock_llm):
                         data={
                             "github_url": "https://github.com/fake/repo",
                             "ai_provider": "ollama",
-                            "ai_model": "llama3",
+                            "ai_model": "minimax-m2.7",
                             "target_phase": "2",
                                 "client_id": "test-client-id",
                             "supplemental_urls": "",
@@ -142,7 +142,7 @@ def test_process_phase_3(mock_ingestor, mock_llm):
                         data={
                             "github_url": "https://github.com/fake/repo",
                             "ai_provider": "ollama",
-                            "ai_model": "llama3",
+                            "ai_model": "minimax-m2.7",
                             "target_phase": "3",
                                 "client_id": "test-client-id",
                             "supplemental_urls": "",
