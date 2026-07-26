@@ -115,11 +115,18 @@ async def process(
             repo_files = await ingestor.ingest_github_repo(github_url)
 
         urls_to_fetch = [u.strip() for u in supplemental_urls.split(",") if u.strip()]
-        supplemental_content = await ingestor.fetch_urls(urls_to_fetch)
 
+        desc_is_url = False
         if target_mode == "description":
             if not public_description:
                 return HTMLResponse("Public description is required for description mode.", status_code=400)
+            if public_description.strip().startswith(("http://", "https://")) and "\n" not in public_description.strip():
+                urls_to_fetch.append(public_description.strip())
+                desc_is_url = True
+
+        supplemental_content = await ingestor.fetch_urls(urls_to_fetch)
+
+        if target_mode == "description" and not desc_is_url:
             supplemental_content["Public Description"] = public_description
 
         search_context = ""
@@ -171,6 +178,7 @@ async def process(
                     <input type="hidden" name="ai_provider" value="{ai_provider}">
                     <input type="hidden" name="ai_model" value="{ai_model}">
                     <input type="hidden" name="download_id" value="{download_id}">
+                    <input type="hidden" name="client_id" value="{client_id}">
                     <button type="submit">Proceed to Phase 2 (Local Implementation)</button>
                 </form>
             </article>
