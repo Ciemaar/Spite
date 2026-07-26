@@ -1,12 +1,14 @@
+import functools
 import json
 import logging
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated
 
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from spite.stream import ProgressStream  # type: ignore
@@ -45,16 +47,38 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 
-def load_models_config() -> dict[str, Any]:
-    """Load the models configuration from the JSON file."""
+class ModelOption(BaseModel):
+    """Configuration for a single AI model."""
+
+    id: str
+    name: str
+    description: str
+
+
+class ModelsConfig(BaseModel):
+    """Configuration schema for available AI models."""
+
+    default_model: str
+    models: list[ModelOption]
+
+
+@functools.lru_cache(maxsize=1)
+def load_models_config() -> ModelsConfig:
+    """Load and cache the models configuration from the JSON file."""
     config_path = Path(settings.models_config_path)
     if config_path.exists():
         try:
             with open(config_path, encoding="utf-8") as f:
-                return json.load(f)  # pyright: ignore
+                data = json.load(f)
+                return ModelsConfig.model_validate(data)
         except Exception as e:
-            logger.error(f"Error loading models config: {e}")
-    return {"default_model": "llama3", "models": [{"id": "llama3", "name": "Llama 3 (8B)", "description": ""}]}
+            logger.error(f"Error loading or validating models config: {e}")
+
+    # Fallback default configuration
+    return ModelsConfig(
+        default_model="llama3",
+        models=[ModelOption(id="llama3", name="Llama 3 (8B)", description="")]
+    )
 
 
 @app.get("/", response_class=HTMLResponse)
