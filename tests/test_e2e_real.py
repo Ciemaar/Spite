@@ -7,6 +7,7 @@ from spite.main import app
 
 client = TestClient(app)
 
+
 @pytest.mark.skipif(
     not os.environ.get("SPITE_RUN_REAL_E2E"),
     reason="SPITE_RUN_REAL_E2E environment variable not set",
@@ -28,7 +29,7 @@ def test_real_process_phase_2():
             "web_search": False,
             "additional_instructions": "Make it simple.",
         },
-        timeout=300.0, # LLMs can take a long time
+        timeout=300.0,  # LLMs can take a long time
     )
 
     assert response.status_code == 200
