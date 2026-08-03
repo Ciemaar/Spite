@@ -7,21 +7,26 @@ from spite.main import app
 
 client = TestClient(app)
 
+
 @pytest.fixture
 def mock_ingestor():
     with patch("spite.ingest.IngestionManager") as MockIngestor:
         instance = MockIngestor.return_value
-        instance.ingest_github_repo = AsyncMock(return_value={"README.md": "# Fake Repo"})
+        instance.ingest_github_repo = AsyncMock(
+            return_value={"README.md": "# Fake Repo"}
+        )
         instance.fetch_urls = AsyncMock(return_value={})
         instance.search_web = MagicMock(return_value="")
         instance.close = AsyncMock()
         yield instance
+
 
 @pytest.fixture
 def mock_llm():
     with patch("spite.llm.LLMInterface") as MockLLM:
         instance = MockLLM.return_value
         yield instance
+
 
 def test_process_phase_1(mock_ingestor, mock_llm):
     mock_specs = {
@@ -46,11 +51,11 @@ def test_process_phase_1(mock_ingestor, mock_llm):
                 "ai_provider": "ollama",
                 "ai_model": "llama3",
                 "target_phase": "1",
-                    "client_id": "test-client-id",
+                "client_id": "test-client-id",
                 "supplemental_urls": "",
                 "web_search": False,
                 "additional_instructions": "",
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -58,6 +63,7 @@ def test_process_phase_1(mock_ingestor, mock_llm):
         assert "Phase 1 Complete" in response.text
         assert "Download .zip" in response.text
         assert len(response.content) > 0
+
 
 def test_process_phase_2(mock_ingestor, mock_llm):
     # Mock Dirty Agent output
@@ -85,7 +91,6 @@ def test_process_phase_2(mock_ingestor, mock_llm):
                 mock_init.return_value = "/tmp/fake_repo"
 
                 with patch("subprocess.run"):
-
                     response = client.post(
                         "/process",
                         data={
@@ -93,11 +98,11 @@ def test_process_phase_2(mock_ingestor, mock_llm):
                             "ai_provider": "ollama",
                             "ai_model": "llama3",
                             "target_phase": "2",
-                                "client_id": "test-client-id",
+                            "client_id": "test-client-id",
                             "supplemental_urls": "",
                             "web_search": False,
                             "additional_instructions": "Do a good job.",
-                        }
+                        },
                     )
 
                     assert response.status_code == 200
@@ -111,6 +116,7 @@ def test_process_phase_2(mock_ingestor, mock_llm):
                     called_specs = clean_instance.generate_codebase.call_args[0][0]
                     assert "Additional Instructions" in called_specs["AGENTS.md"]
                     assert "Do a good job." in called_specs["AGENTS.md"]
+
 
 def test_process_phase_3(mock_ingestor, mock_llm):
     mock_specs = {
@@ -144,11 +150,11 @@ def test_process_phase_3(mock_ingestor, mock_llm):
                             "ai_provider": "ollama",
                             "ai_model": "llama3",
                             "target_phase": "3",
-                                "client_id": "test-client-id",
+                            "client_id": "test-client-id",
                             "supplemental_urls": "",
                             "web_search": False,
                             "additional_instructions": "",
-                        }
+                        },
                     )
 
                     assert response.status_code == 200

@@ -1,3 +1,5 @@
+import functools
+import json
 import logging
 from pathlib import Path
 from typing import Annotated
@@ -6,6 +8,7 @@ from fastapi import FastAPI, Form, Request
 from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from spite.stream import ProgressStream  # type: ignore
@@ -24,6 +27,7 @@ class Settings(BaseSettings):
 
     ollama_host: str = "http://localhost:11434"
     max_qa_turns: int = 3
+    models_config_path: str = "models.json"
 
 
 settings = Settings()
@@ -43,10 +47,47 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 
+class ModelOption(BaseModel):
+    """Configuration for a single AI model."""
+
+    id: str
+    name: str
+    description: str
+
+
+class ModelsConfig(BaseModel):
+    """Configuration schema for available AI models."""
+
+    default_model: str
+    models: list[ModelOption]
+
+
+@functools.lru_cache(maxsize=1)
+def load_models_config() -> ModelsConfig:
+    """Load and cache the models configuration from the JSON file."""
+    config_path = Path(settings.models_config_path)
+    if config_path.exists():
+        try:
+            with open(config_path, encoding="utf-8") as f:
+                data = json.load(f)
+                return ModelsConfig.model_validate(data)
+        except Exception as e:
+            logger.error(f"Error loading or validating models config: {e}")
+
+    # Fallback default configuration
+    return ModelsConfig(
+        default_model="llama3",
+        models=[ModelOption(id="llama3", name="Llama 3 (8B)", description="")],
+    )
+
+
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request) -> HTMLResponse:
     """Render the main index page."""
-    return templates.TemplateResponse(request=request, name="index.html")
+    models_config = load_models_config()
+    return templates.TemplateResponse(
+        request=request, name="index.html", context={"models_config": models_config}
+    )
 
 
 @app.get("/stream/{client_id}")
@@ -54,8 +95,9 @@ async def stream_events(client_id: str):
     """SSE endpoint for streaming progress updates."""
     if client_id not in global_streams:
         global_streams[client_id] = ProgressStream()
-    return StreamingResponse(global_streams[client_id].get_stream(), media_type="text/event-stream")
-
+    return StreamingResponse(
+        global_streams[client_id].get_stream(), media_type="text/event-stream"
+    )
 
 
 @app.get("/download/{download_id}")
@@ -71,8 +113,9 @@ async def download_specs(download_id: str):
     return FileResponse(
         path=download_path,
         media_type="application/x-zip-compressed",
-        filename="spite_specs.zip"
+        filename="spite_specs.zip",
     )
+
 
 @app.post("/process", response_model=None)
 async def process(
@@ -140,6 +183,7 @@ async def process(
         if target_phase == "1":
             zip_buffer = create_zip_payload(specs)
             import uuid
+
             download_id = str(uuid.uuid4())
             download_dir = Path("data/downloads")
             download_dir.mkdir(parents=True, exist_ok=True)
@@ -147,7 +191,8 @@ async def process(
             with open(download_path, "wb") as f:
                 f.write(zip_buffer.getvalue())
 
-            return HTMLResponse(f"""
+            return HTMLResponse(
+                f"""
             <article>
                 <header>Phase 1 Complete</header>
                 <p>Specifications have been generated.</p>
@@ -162,12 +207,11 @@ async def process(
                     <button type="submit">Proceed to Phase 2 (Local Implementation)</button>
                 </form>
             </article>
-            """)
+            """
+            )
 
         # Phase 2 implementation
-        await stream.add_message(
-            "<div>Starting clean-room implementation...</div>"
-        )
+        await stream.add_message("<div>Starting clean-room implementation...</div>")
         import subprocess
 
         from .generator import CleanAgent
@@ -198,7 +242,8 @@ async def process(
         )
 
         if target_phase == "2":
-            return HTMLResponse(f"""
+            return HTMLResponse(
+                f"""
             <article>
                 <header>Phase 2 Complete</header>
                 <p>Repository implemented at: <code>{repo_path}</code></p>
@@ -209,7 +254,8 @@ async def process(
                     <button type="submit">Proceed to Phase 3 (AI Enhancements)</button>
                 </form>
             </article>
-            """)
+            """
+            )
 
         # Phase 3 implementation
         await stream.add_message("<div>Applying AI enhancements...</div>")
@@ -232,18 +278,21 @@ async def process(
             check=True,
         )
 
-        return HTMLResponse(f"""
+        return HTMLResponse(
+            f"""
         <article>
             <header>Phase 3 Complete</header>
             <p>Enhanced repository available at: <code>{repo_path}</code></p>
         </article>
-        """)
+        """
+        )
 
     except Exception as e:
         logger.exception("Error processing request")
         return HTMLResponse(f"<article>Error: {str(e)}</article>", status_code=500)
     finally:
         await ingestor.close()
+
 
 @app.post("/process_phase2", response_model=None)
 async def process_phase2(
@@ -276,12 +325,12 @@ async def process_phase2(
             return HTMLResponse("Invalid download ID.", status_code=400)
 
         if not download_path.exists():
-             return HTMLResponse("Specifications zip not found.", status_code=404)
+            return HTMLResponse("Specifications zip not found.", status_code=404)
 
         specs: dict[str, str] = {}
         with zipfile.ZipFile(download_path, "r") as zip_file:
             for item in zip_file.namelist():
-                specs[item] = zip_file.read(item).decode('utf-8')
+                specs[item] = zip_file.read(item).decode("utf-8")
 
         await stream.add_message("<div>Starting clean-room implementation...</div>")
         repo_path = init_local_repo()
@@ -307,7 +356,8 @@ async def process_phase2(
             check=True,
         )
 
-        return HTMLResponse(f"""
+        return HTMLResponse(
+            f"""
         <article>
             <header>Phase 2 Complete</header>
             <p>Repository implemented at: <code>{repo_path}</code></p>
@@ -320,10 +370,12 @@ async def process_phase2(
                 <button type="submit">Proceed to Phase 3 (AI Enhancements)</button>
             </form>
         </article>
-        """)
+        """
+        )
     except Exception as e:
         logger.exception("Error processing phase 2 request")
         return HTMLResponse(f"<article>Error: {str(e)}</article>", status_code=500)
+
 
 @app.post("/process_phase3", response_model=None)
 async def process_phase3(
@@ -350,6 +402,7 @@ async def process_phase3(
 
     try:
         import tempfile
+
         r_path = Path(repo_path).resolve()
         temp_dir = Path(tempfile.gettempdir()).resolve()
         if not r_path.is_relative_to(temp_dir):
@@ -365,7 +418,7 @@ async def process_phase3(
             if download_path.exists():
                 with zipfile.ZipFile(download_path, "r") as zip_file:
                     for item in zip_file.namelist():
-                        specs[item] = zip_file.read(item).decode('utf-8')
+                        specs[item] = zip_file.read(item).decode("utf-8")
 
         await stream.add_message("<div>Applying AI enhancements...</div>")
         clean_agent = CleanAgent(
@@ -390,12 +443,14 @@ async def process_phase3(
             check=True,
         )
 
-        return HTMLResponse(f"""
+        return HTMLResponse(
+            f"""
         <article>
             <header>Phase 3 Complete</header>
             <p>Enhanced repository available at: <code>{repo_path}</code></p>
         </article>
-        """)
+        """
+        )
     except Exception as e:
         logger.exception("Error processing phase 3 request")
         return HTMLResponse(f"<article>Error: {str(e)}</article>", status_code=500)

@@ -16,7 +16,7 @@ def test_path_traversal_prevention():
     files = {
         "../../../etc/passwd": "hacked",
         "/absolute/path/test.txt": "hacked again",
-        "valid_file.txt": "safe"
+        "valid_file.txt": "safe",
     }
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -32,7 +32,9 @@ def test_path_traversal_prevention():
         # Ensure it didn't create a literal ../../../etc/passwd folder structure outside
         # The logic prevents `full_path.startswith(repo_path)`
         # so these files should have just been skipped/ignored
-        assert len(list(repo_path.glob("**/*"))) == 1 # only valid_file.txt should exist
+        assert (
+            len(list(repo_path.glob("**/*"))) == 1
+        )  # only valid_file.txt should exist
 
 
 @pytest.mark.asyncio

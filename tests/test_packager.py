@@ -11,9 +11,10 @@ def test_create_zip_payload():
 
     zip_buffer = create_zip_payload(specs)
 
-    with zipfile.ZipFile(zip_buffer, 'r') as zf:
+    with zipfile.ZipFile(zip_buffer, "r") as zf:
         assert set(zf.namelist()) == {"REQUIREMENTS.md", "AGENTS.md"}
         assert zf.read("REQUIREMENTS.md").decode() == "# Requirements\n\n- Do stuff"
+
 
 def test_init_local_repo():
     repo_path = init_local_repo()

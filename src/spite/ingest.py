@@ -85,6 +85,7 @@ class IngestionManager:
     async def fetch_urls(self, urls: list[str]) -> dict[str, str]:
         """Fetch the text content of a list of URLs."""
         import asyncio
+
         results: dict[str, str] = {}
         loop = asyncio.get_running_loop()
 
@@ -101,7 +102,9 @@ class IngestionManager:
                 try:
                     if not parsed.hostname:
                         continue
-                    ip = await loop.run_in_executor(None, socket.gethostbyname, parsed.hostname)
+                    ip = await loop.run_in_executor(
+                        None, socket.gethostbyname, parsed.hostname
+                    )
                     if (
                         ip.startswith("127.")
                         or ip.startswith("10.")

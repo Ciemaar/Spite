@@ -18,7 +18,8 @@ print("hello")
 """
     files = agent._parse_files(llm_output)
     assert "code.py" in files
-    assert files["code.py"] == "print(\"hello\")"
+    assert files["code.py"] == 'print("hello")'
+
 
 def test_write_files():
     mock_dirty = MagicMock(spec=DirtyAgent)
