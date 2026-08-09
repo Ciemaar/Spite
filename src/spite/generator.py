@@ -3,12 +3,79 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import dspy  # type: ignore
+
 from .llm import LLMInterface
 
 if TYPE_CHECKING:
     from .analyzer import DirtyAgent
 
 logger = logging.getLogger(__name__)
+
+
+class CleanAgentAction(dspy.Signature):
+    r"""Ask a question or provide the codebase based on specs.
+
+    You are the 'Clean' Agent in a clean-room software recreation system.
+    Your job is to implement the software exactly according to the provided specs.
+    You MUST NOT access the internet or the original source code.
+    You have the opportunity to ask the 'Dirty' Agent questions about public, observable behavior.
+    You MUST format your output as a JSON object with either a 'question' key OR 'code' key.
+    If you need clarification, output: {"question": "Your question here"}
+    If you are ready to write code, output: {"code": "```markdown\\n# filepath: ...\\n...```"}.
+    """
+
+    requirements: str = dspy.InputField(desc="The software requirements.")
+    plan: str = dspy.InputField(desc="The implementation plan.")
+    agent_instructions: str = dspy.InputField(desc="The agent instructions.")
+    qa_history: str = dspy.InputField(
+        desc="The history of questions asked and answers received so far."
+    )
+    action: str = dspy.OutputField(
+        desc="A JSON object containing either 'question' or 'code'."
+    )
+
+
+class FinalCodeGeneration(dspy.Signature):
+    """Output the final codebase using markdown blocks.
+
+    You are the 'Clean' Agent in a clean-room software recreation system.
+    Please output the complete codebase now.
+    Output the files using the standard markdown block format:
+    ```markdown
+    # filepath: filename.ext
+    [code]
+    ```.
+    """
+
+    requirements: str = dspy.InputField(desc="The software requirements.")
+    plan: str = dspy.InputField(desc="The implementation plan.")
+    agent_instructions: str = dspy.InputField(desc="The agent instructions.")
+    qa_history: str = dspy.InputField(
+        desc="The history of questions asked and answers received so far."
+    )
+    markdown_files_output: str = dspy.OutputField(
+        desc="The complete codebase in markdown format."
+    )
+
+
+class ApplyImprovements(dspy.Signature):
+    """Apply improvements to the codebase.
+
+    You are the 'Clean' Agent.
+    Your job is to apply the provided improvements to the existing codebase.
+    Output the updated files using the standard markdown block format:
+    ```markdown
+    # filepath: filename.ext
+    [code]
+    ```.
+    """
+
+    current_codebase: str = dspy.InputField(desc="The current codebase context.")
+    improvements: str = dspy.InputField(desc="The improvements to apply.")
+    updated_files_output: str = dspy.OutputField(
+        desc="The updated files in markdown format."
+    )
 
 
 class CleanAgent:
@@ -25,27 +92,32 @@ class CleanAgent:
 
     async def generate_codebase(self, specs: dict[str, str], repo_path: Path) -> None:
         """Generate the codebase via Q&A and write to the repo path."""
+        # Ensure DSPy is configured globally for this execution
+        if self.llm.dspy_lm:
+            dspy.settings.configure(lm=self.llm.dspy_lm)
+
         # Setup clean agent prompt
         implementation_plan = specs.get("IMPLEMENTATION_PLAN.md", "")
         requirements = specs.get("REQUIREMENTS.md", "")
         agents_instructions = specs.get("AGENTS.md", "")
 
-        system_prompt = (
-            "You are the 'Clean' Agent in a clean-room software recreation system.\n"
-            "Your job is to implement the software exactly according to the provided specs.\n"
-            "You MUST NOT access the internet or the original source code.\n"
-            "You have the opportunity to ask the 'Dirty' Agent questions about public, observable behavior.\n"
-            "You MUST format your output as a JSON object with either a 'question' key OR 'code' key.\n"
-            'If you need clarification, output: {"question": "Your question here"}\n'
-            'If you are ready to write code, output: {"code": "```markdown\\n# filepath: ...\\n...```"}\n'
-        )
-
-        user_prompt = f"Requirements:\n{requirements}\n\nPlan:\n{implementation_plan}\n\nInstructions:\n{agents_instructions}\n"
+        qa_history_str = ""
+        determine_action = dspy.Predict(CleanAgentAction)
+        generate_final_code = dspy.Predict(FinalCodeGeneration)
 
         # Q&A Loop
         for turn in range(self.max_turns):
             logger.info(f"Clean Agent turn {turn + 1}")
-            response = await self.llm.generate_response(system_prompt, user_prompt)
+
+            result = determine_action(
+                requirements=requirements,
+                plan=implementation_plan,
+                agent_instructions=agents_instructions,
+                qa_history=qa_history_str
+                if qa_history_str
+                else "No questions asked yet.",
+            )
+            response = result.action
 
             # Simple heuristic parsing since we asked for JSON but LLMs can be tricky
             if '"question"' in response.lower() and '"code"' not in response.lower():
@@ -73,17 +145,20 @@ class CleanAgent:
                 logger.info(f"Dirty Agent answers: {dirty_answer}")
                 self.qa_log.append(f"**Dirty Agent:** {dirty_answer}")
 
-                user_prompt += f"\n\nDirty Agent Answer:\n{dirty_answer}\n\nNow, do you have another question or are you ready to write code?"
+                qa_history_str += f"\nQ: {question}\nA: {dirty_answer}\n"
             else:
                 # Assume it's ready to output code
                 logger.info("Clean Agent is ready to output code.")
                 break
 
         # Final Generation
-        user_prompt += "\n\nPlease output the complete codebase now using the markdown format:\n```markdown\n# filepath: filename.ext\n[code]\n```"
-        final_code_response = await self.llm.generate_response(
-            system_prompt, user_prompt
+        final_result = generate_final_code(
+            requirements=requirements,
+            plan=implementation_plan,
+            agent_instructions=agents_instructions,
+            qa_history=qa_history_str if qa_history_str else "No questions asked.",
         )
+        final_code_response = final_result.markdown_files_output
 
         # Parse and write files
         files = self._parse_files(final_code_response)
@@ -145,6 +220,10 @@ class CleanAgent:
         if not improvements:
             return
 
+        # Ensure DSPy is configured globally for this execution
+        if self.llm.dspy_lm:
+            dspy.settings.configure(lm=self.llm.dspy_lm)
+
         # Read current files
         current_files = ""
         for path in repo_path.rglob("*"):
@@ -160,14 +239,11 @@ class CleanAgent:
                 except UnicodeDecodeError:
                     pass
 
-        system_prompt = (
-            "You are the 'Clean' Agent.\n"
-            "Your job is to apply the provided improvements to the existing codebase.\n"
-            "Output the updated files using the standard markdown block format.\n"
+        apply_improvements_pred = dspy.Predict(ApplyImprovements)
+        result = apply_improvements_pred(
+            current_codebase=current_files, improvements=improvements
         )
 
-        user_prompt = f"Current Codebase:\n{current_files}\n\nImprovements to Apply:\n{improvements}"
-
-        response = await self.llm.generate_response(system_prompt, user_prompt)
+        response = result.updated_files_output
         files = self._parse_files(response)
         self._write_files(files, repo_path)
