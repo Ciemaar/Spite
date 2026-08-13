@@ -6,13 +6,14 @@ To fully leverage DSPy and improve the reliability and quality of the generated 
 
 ## 1. Implement Typed Predictors (Pydantic Integration)
 
-Currently, Spite relies on fuzzy parsing heuristics (regex and `try/except json.loads`) to extract the exact files, Q&A JSON outputs, and code blocks from the LLM responses. DSPy supports `dspy.TypedPredictor` which enforces structured output using Pydantic models.
+*(Partially Completed)*
 
-**Action Item:**
+We have successfully migrated the `CleanAgentAction` signature to use a Pydantic model (`CleanAgentActionOutput`) for its output, removing the messy `try/except json.loads` regex parsing in `generator.py`. DSPy forces structured JSON outputs via `dspy.TypedPredictor`.
 
-- Refactor the `CleanAgentAction` signature to use a Pydantic model for its output (e.g., a model that requires either a `question: str | None` or `code: dict[str, str] | None`).
+**Remaining Action Item:**
+
 - Refactor the `GenerateSpecs` signature to output a Pydantic model containing a dictionary mapping file paths to file contents, rather than relying on the LLM to format markdown code blocks exactly right.
-- This will drastically reduce the need for retry loops and manual parsing logic in `analyzer.py` and `generator.py`.
+- Refactor `FinalCodeGeneration` and `ApplyImprovements` to similarly use a Pydantic model mapping file paths to strings, removing the need for `_parse_files(llm_output)` entirely.
 
 ## 2. Develop Evaluation Metrics
 
@@ -50,6 +51,15 @@ Currently, DSPy's standard `dspy.Predict` operates synchronously. While it wraps
 
 - Investigate `dspy.asyncify` or migrating to the explicitly asynchronous prediction methods within DSPy to ensure the Spite API remains highly responsive during the hours-long clean-room generation phases.
 
+## 6. Configure Caching and Rate Limits
+
+DSPy caches responses by default in a local sqlite database. While this is extremely helpful for rapid testing and compilation, in a long-running generation script it can sometimes cause unexpected stale responses if not managed properly.
+
+**Action Item:**
+
+- Configure `dspy.settings.configure(cache=False)` for production runs where we want fresh outputs, or configure a specific cache directory inside the Spite working directory (e.g., `.spite_cache/`).
+- Configure retry and timeout parameters in the `dspy.LM` initialization within `llm.py` to ensure local Ollama instances don't throw connection errors on extremely long code generation tasks.
+
 ## Summary
 
-The current integration is a successful Level 1 implementation (Prompt Replacement). Moving to Level 2 (Structured Outputs) and Level 3 (Automated Optimization) will transform Spite from a standard LLM wrapper into a self-improving, robust clean-room agent framework.
+The current integration is a successful implementation of Prompt Replacement and initial Structured Outputs (via Pydantic and ChainOfThought). Moving fully to Level 2 (Strict Output Validation) and Level 3 (Automated Optimization) will transform Spite from a standard LLM wrapper into a self-improving, robust clean-room agent framework.
