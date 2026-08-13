@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import dspy  # type: ignore
+from pydantic import BaseModel, Field
 
 from .llm import LLMInterface
 
@@ -13,6 +14,19 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+class CleanAgentActionOutput(BaseModel):
+    """The action the Clean Agent wants to take."""
+
+    question: str | None = Field(
+        default=None,
+        description="The question to ask the Dirty Agent. Null if you are ready to write code.",
+    )
+    code: str | None = Field(
+        default=None,
+        description="The complete codebase in markdown block format. Null if you need to ask a question.",
+    )
+
+
 class CleanAgentAction(dspy.Signature):
     r"""Ask a question or provide the codebase based on specs.
 
@@ -20,9 +34,7 @@ class CleanAgentAction(dspy.Signature):
     Your job is to implement the software exactly according to the provided specs.
     You MUST NOT access the internet or the original source code.
     You have the opportunity to ask the 'Dirty' Agent questions about public, observable behavior.
-    You MUST format your output as a JSON object with either a 'question' key OR 'code' key.
-    If you need clarification, output: {"question": "Your question here"}
-    If you are ready to write code, output: {"code": "```markdown\\n# filepath: ...\\n...```"}.
+    You must decide to either ask a question OR write the code.
     """
 
     requirements: str = dspy.InputField(desc="The software requirements.")
@@ -31,8 +43,8 @@ class CleanAgentAction(dspy.Signature):
     qa_history: str = dspy.InputField(
         desc="The history of questions asked and answers received so far."
     )
-    action: str = dspy.OutputField(
-        desc="A JSON object containing either 'question' or 'code'."
+    action: CleanAgentActionOutput = dspy.OutputField(
+        desc="The structured action output."
     )
 
 
@@ -102,8 +114,10 @@ class CleanAgent:
         agents_instructions = specs.get("AGENTS.md", "")
 
         qa_history_str = ""
-        determine_action = dspy.Predict(CleanAgentAction)
-        generate_final_code = dspy.Predict(FinalCodeGeneration)
+        # Using ChainOfThought. DSPy > 2.5 natively handles Pydantic OutputFields on predictors.
+        determine_action = dspy.ChainOfThought(CleanAgentAction)
+        # Final code generation should use ChainOfThought for better layout reasoning
+        generate_final_code = dspy.ChainOfThought(FinalCodeGeneration)
 
         # Q&A Loop
         for turn in range(self.max_turns):
@@ -117,25 +131,12 @@ class CleanAgent:
                 if qa_history_str
                 else "No questions asked yet.",
             )
-            response = result.action
 
-            # Simple heuristic parsing since we asked for JSON but LLMs can be tricky
-            if '"question"' in response.lower() and '"code"' not in response.lower():
-                # Extract question
-                try:
-                    import json
+            action_output: CleanAgentActionOutput = result.action
 
-                    # Try to extract JSON block if it's wrapped in markdown
-                    json_str = response
-                    if "```json" in response:
-                        json_str = response.split("```json")[1].split("```")[0]
-                    elif "```" in response:
-                        json_str = response.split("```")[1].split("```")[0]
-
-                    data = json.loads(json_str)
-                    question = data.get("question", "No question found.")
-                except Exception:
-                    question = response  # Fallback
+            # Use structured Pydantic object
+            if action_output.question and not action_output.code:
+                question = action_output.question
 
                 logger.info(f"Clean Agent asks: {question}")
                 self.qa_log.append(f"**Clean Agent:** {question}")
@@ -147,7 +148,7 @@ class CleanAgent:
 
                 qa_history_str += f"\nQ: {question}\nA: {dirty_answer}\n"
             else:
-                # Assume it's ready to output code
+                # Assume it's ready to output code or already did
                 logger.info("Clean Agent is ready to output code.")
                 break
 

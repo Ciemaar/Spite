@@ -109,7 +109,8 @@ class DirtyAgent:
             "SOURCE_EXCLUDES.txt",
         }
 
-        generate_specs = dspy.Predict(GenerateSpecs)
+        # Use ChainOfThought to force the model to plan out its markdown generation
+        generate_specs = dspy.ChainOfThought(GenerateSpecs)
 
         # Try up to 3 times to get all 8 files
         max_retries = 3
