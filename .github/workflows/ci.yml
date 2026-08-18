@@ -29,6 +29,9 @@ jobs:
     - name: Set up Python
       run: uv python install --preview ${{ matrix.python-version }}
 
+    - name: Install System Dependencies for source builds
+      run: sudo apt-get update && sudo apt-get install -y libxml2-dev libxslt1-dev
+
     - name: Install dependencies
       continue-on-error: ${{ matrix.continue-on-error || false }}
       run: PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1 uv sync --all-extras --dev --python ${{ matrix.python-version }}
