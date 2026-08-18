@@ -9,6 +9,16 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.15"]
+        include:
+          - python-version: "3.12"
+            tox-env: "py312"
+          - python-version: "3.15"
+            tox-env: "py315"
+            continue-on-error: true
 
     steps:
     - uses: actions/checkout@v4
@@ -17,10 +27,12 @@ jobs:
       uses: astral-sh/setup-uv@v5
 
     - name: Set up Python
-      run: uv python install 3.12
+      run: uv python install --preview ${{ matrix.python-version }}
 
     - name: Install dependencies
-      run: uv sync --all-extras --dev
+      continue-on-error: ${{ matrix.continue-on-error || false }}
+      run: PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1 uv sync --all-extras --dev --python ${{ matrix.python-version }}
 
     - name: Run checks via tox
-      run: uv run tox
+      continue-on-error: ${{ matrix.continue-on-error || false }}
+      run: uv run tox -e ${{ matrix.tox-env }}
