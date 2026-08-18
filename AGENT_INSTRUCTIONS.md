@@ -9,9 +9,10 @@ Please strictly adhere to the following guidelines and instructions as you imple
 - **Name:** Spite
 - **Purpose:** Provide a legal "clean room" recreation of open-source dependencies by analyzing only public interfaces and generating a new implementation from scratch using AI.
 - **Tech Stack:**
-  - Backend: Python (FastAPI or Flask recommended for HTMX support).
-  - Frontend: HTMX with a minimal CSS framework (Tailwind CSS or similar).
+  - Backend: Python 3.12+ with FastAPI.
+  - Frontend: HTMX with a minimal CSS framework (Tailwind CSS or PicoCSS). Templating via Jinja2.
   - AI Integration: Local Ollama (Primary) and user-provided API keys (OpenAI/Anthropic).
+  - Dependency Management: exclusively `uv`, strict `src`-based layout, single `pyproject.toml`. Configuration parsed and validated strictly via `pydantic-settings`.
 
 ## 2. Core Implementation Directives
 
@@ -23,7 +24,8 @@ You must implement a strict architectural boundary between the "Dirty" and "Clea
 - It should only extract and pass: `README.md`, documentation, exported type definitions (e.g., `.d.ts`, `__init__.py` stubs), public function signatures, as well as context gathered from external public documentation and discussion forums.
 - If you use an LLM to help extract these signatures, that LLM session must be isolated and its output strictly formatted as Markdown specifications.
 - **Critical Configuration:** The Clean agent MUST be explicitly configured with an exclude blocklist (using `SOURCE_EXCLUDES.txt` output from the Dirty agent) to strictly forbid it from searching, querying, or referencing the original source code or repository.
-- **Restricted Communication:** A restricted Q&A channel is permitted during implementation. The Dirty agent must act as a behavioral oracle, and the Clean agent must act as a blind implementer. Both must strictly adhere to an "observable behavior only" constraint. All interactions must be logged.
+- **Restricted Communication:** A restricted Q&A channel is permitted during implementation. The Dirty agent class must internally encapsulate and retain the original ingested resources to act as an Oracle, ensuring the Clean agent never handles the raw source directly. Both must strictly adhere to an "observable behavior only" constraint. All interactions must be logged.
+- **Context Management:** Current architecture manages context windows by truncating files and passing context directly to the LLM. Vector databases are not explicitly forbidden but not currently used.
 
 ### 2.2 Implement Delivery Phases
 
@@ -51,21 +53,39 @@ You must build three distinct delivery phases and support a workflow that allows
 - Include form inputs for:
   - Target GitHub URL.
   - Supplemental URLs (for public documentation, discussion forums) and a checkbox to enable automated web search (enabled by default).
-  - AI Provider Selection (Ollama model dropdown or API Key input field).
+  - AI Provider Selection (Ollama model dropdown or API Key input field). Configured via `models.json`.
   - Target Phase Selector (Phase 1: Zip, Phase 2: Full Repo, Phase 3: Enhanced Repo), designed to support sequential progression between phases.
+- **HTMX Limitations & Workarounds:**
+  - HTMX forms triggering long-running processes or file downloads must use the `hx-disabled-elt` attribute (e.g., `hx-disabled-elt="button[type='submit']"`) to disable submit buttons and prevent double-submission bugs.
+  - HTMX `hx-post` requests cannot natively handle binary file downloads. For file downloads, save the generated file to disk (e.g., `data/downloads/`) and return an HTML response containing an `<a>` tag with a download link instead of returning a `StreamingResponse`.
 
 ## 3. Development Workflow & Rules
 
 1. **Test-Driven Development (TDD):** Where possible, write tests for your core logic before implementing it. Specifically, write robust tests for the GitHub fetching logic and the type/signature extraction logic.
-1. **Local AI First:** Always default to and test with Ollama. Assume the user is running Ollama locally on `http://localhost:11434`. Provide clear error messages if Ollama is not reachable or the requested model is not pulled.
+1. **Local Setup & Tooling:**
+   - Install dependencies: `uv sync --all-extras --dev`
+   - Run tests: `uv run pytest`, `uv run tox`
+   - Linter/Formatter: strictly uses `ruff` (including pydocstyle D rules), `mdformat` for Markdown, and `pyright` in strict mode. Run `uv run ruff check --fix .` and `uv run ruff format .` to fix issues automatically.
+   - Run locally: `uv run uvicorn spite.main:app --host 127.0.0.1 --port 8000`
+   - Pre-commit hooks are required.
+1. **Coding Standards:**
+   - Use built-in type hints (e.g., `list[str]`).
+   - Empty collections must be explicitly typed upon initialization (e.g., `specs: dict[str, str] = {}`).
+   - Top-of-file imports, explicit ternary operators (e.g., `x if x is not None else y`), `pathlib.Path` for file access, and the `logging` module instead of `print()`.
+   - Local configuration files (e.g., JSON files) must be parsed and strictly validated using Pydantic models.
+   - Cache file loading operations (`@functools.lru_cache`) to prevent synchronous disk I/O from blocking the FastAPI event loop.
+   - Ruff McCabe max-complexity is configured to 15 to accommodate async endpoint handling.
+   - Do not block the FastAPI event loop with synchronous network or I/O calls; wrap them using `asyncio.get_running_loop().run_in_executor(None, func, *args)`.
+1. **Local AI First:** Always default to and test with Ollama. Assume the user is running Ollama locally on `http://localhost:11434`. Provide clear error messages if Ollama is not reachable or the requested model is not pulled. Target models prioritizing compact models like `phi-4-mini-instruct` or `qwopus-3.5-coder-4b` to fit within local hardware constraints (e.g., GTX 1060 6GB VRAM) as defined in `models.json` and `MODEL_OPTIONS.md`.
 1. **Modularity:** Separate the application into clear modules:
    - `ingest.py`: Handling GitHub fetching and filtering.
    - `analyze.py`: The "Dirty" agent logic for generating specifications.
    - `generate.py`: The "Clean" agent logic for executing the specifications (Phase 2 & 3).
    - `package.py`: Logic for creating the Zip archive (Phase 1) and Git repository.
-   - `web.py`: The FastAPI/Flask application and HTMX endpoints.
-1. **Error Handling:** Gracefully handle GitHub API rate limits, large repositories (implement a reasonable size or file count limit), and LLM timeout/context window errors.
+   - `web.py`: The FastAPI application and HTMX endpoints.
+1. **Error Handling & Performance:** Gracefully handle GitHub API rate limits, large repositories, and LLM timeout/context window errors. The extraction and analysis phase is computationally intensive and expected to take hours to complete; account for this in performance requirements.
 1. **Security:** Do not execute any code fetched from the target repository. The analysis must be purely static.
+1. **Agentic Workflows:** Always start tasks with a deep planning mode: ask clarifying questions to fully understand requirements before using the `set_plan` tool. Once the plan is approved, execute autonomously. Document AI tools and context files (`AGENTS.md`, `README.md`, `SOURCES.md`, `USER_GUIDE.md`, `DEVELOPER_GUIDE.md`) and session history in `prompts/`, `plans/`, and `reports/`.
 
 ## 4. Getting Started
 
