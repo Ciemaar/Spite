@@ -37,3 +37,10 @@ SPITE_RUN_REAL_E2E=1 uv run pytest tests/test_e2e_real.py -s -v
 ```
 
 This will target `https://github.com/octocat/Hello-World` and attempt to do a complete Phase 2 code generation. Note that this test may take several minutes to run, depending on your hardware and LLM model size.
+
+## Version Control Guidelines
+
+When working with branches and pull requests, please adhere to the following rules:
+
+- When working on an existing, previous branch (i.e., rebasing or merging), features must not be removed if they've been added to the main branch in the intermediate interval.
+- All branches being merged in, as well as their matching PRs, must be referenced in the commit comments and any new PRs.

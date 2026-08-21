@@ -154,7 +154,9 @@ async def process(
         repo_files = {}
         if target_mode == "repo":
             if not github_url:
-                return HTMLResponse("GitHub URL is required for repo mode.", status_code=400)
+                return HTMLResponse(
+                    "GitHub URL is required for repo mode.", status_code=400
+                )
             repo_files = await ingestor.ingest_github_repo(github_url)
 
         urls_to_fetch = [u.strip() for u in supplemental_urls.split(",") if u.strip()]
@@ -162,8 +164,14 @@ async def process(
         desc_is_url = False
         if target_mode == "description":
             if not public_description:
-                return HTMLResponse("Public description is required for description mode.", status_code=400)
-            if public_description.strip().startswith(("http://", "https://")) and "\n" not in public_description.strip():
+                return HTMLResponse(
+                    "Public description is required for description mode.",
+                    status_code=400,
+                )
+            if (
+                public_description.strip().startswith(("http://", "https://"))
+                and "\n" not in public_description.strip()
+            ):
                 urls_to_fetch.append(public_description.strip())
                 desc_is_url = True
 
@@ -174,7 +182,11 @@ async def process(
 
         search_context = ""
         if web_search:
-            search_query = f"{github_url} documentation" if target_mode == "repo" else "documentation"
+            search_query = (
+                f"{github_url} documentation"
+                if target_mode == "repo"
+                else "documentation"
+            )
             search_context = ingestor.search_web(search_query)
 
         await stream.add_message(
