@@ -1,5 +1,9 @@
 # Spite Developer Guide
 
+## Version Control
+
+When working on an existing, previous branch (i.e. rebasing or merging), features must not be removed if they've been added to the main branch in the intermediate interval. All branches being merged in, as well as their matching PRs, must be referenced in the commit comments and any new PRs.
+
 ## Architecture
 
 Spite is built with a strictly `src`-based layout using FastAPI and `uv`.
