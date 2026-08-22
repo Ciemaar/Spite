@@ -61,6 +61,7 @@ You must build three distinct delivery phases and support a workflow that allows
 
 ## 3. Development Workflow & Rules
 
+1. **Version Control:** When working on an existing, previous branch (i.e. rebasing or merging), features must not be removed if they've been added to the main branch in the intermediate interval. All branches being merged in, as well as their matching PRs, must be referenced in the commit comments and any new PRs.
 1. **Test-Driven Development (TDD):** Where possible, write tests for your core logic before implementing it. Specifically, write robust tests for the GitHub fetching logic and the type/signature extraction logic.
 1. **Local Setup & Tooling:**
    - Install dependencies: `uv sync --all-extras --dev`
