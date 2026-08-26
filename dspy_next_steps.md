@@ -6,14 +6,12 @@ To fully leverage DSPy and improve the reliability and quality of the generated 
 
 ## 1. Implement Typed Predictors (Pydantic Integration)
 
-*(Partially Completed)*
+*(Completed)*
 
-We have successfully migrated the `CleanAgentAction` signature to use a Pydantic model (`CleanAgentActionOutput`) for its output, removing the messy `try/except json.loads` regex parsing in `generator.py`. DSPy forces structured JSON outputs via `dspy.TypedPredictor`.
+We have successfully migrated all text-parsing heuristic logic (the messy `try/except json.loads` regex parsing in `generator.py` and `analyzer.py`) over to strict `dspy.TypedPredictor` calls.
 
-**Remaining Action Item:**
-
-- Refactor the `GenerateSpecs` signature to output a Pydantic model containing a dictionary mapping file paths to file contents, rather than relying on the LLM to format markdown code blocks exactly right.
-- Refactor `FinalCodeGeneration` and `ApplyImprovements` to similarly use a Pydantic model mapping file paths to strings, removing the need for `_parse_files(llm_output)` entirely.
+- `GenerateSpecs`, `FinalCodeGeneration`, and `ApplyImprovements` all now enforce output mapping via Pydantic models containing `dict[str, str]` (mapping file paths to their string contents).
+- DSPy automatically handles retrying and validating the JSON format under the hood, saving the custom logic.
 
 ## 2. Develop Evaluation Metrics
 
@@ -37,11 +35,9 @@ Once metrics are defined, we can compile the DSPy pipelines. This involves using
 
 ## 4. Refine the Q&A Loop (Multi-hop Reasoning)
 
-The current `CleanAgent` Q&A loop uses a simple `for` loop in Python to decide whether to ask a question or generate code. DSPy provides modules like `dspy.ReAct` (Reasoning and Acting) or `dspy.ChainOfThought` which are specifically designed for multi-hop reasoning.
+*(Completed)*
 
-**Action Item:**
-
-- Evaluate replacing the Python `for` loop in `generate_codebase` with a `dspy.ReAct` module, giving it a tool to query the `DirtyAgent`. This would allow the LLM to autonomously decide when it has enough information to write the code, utilizing DSPy's built-in reasoning traces.
+The `CleanAgent` Q&A loop was replaced with `dspy.ReAct(CleanAgentBrainstorm, tools=[ask_dirty_agent])`. This removes the manually managed python `for` loop, moving the autonomous reasoning for "when should I ask a question vs write the code" down into the LLM orchestration layer.
 
 ## 5. Handle Async Workloads Better
 
