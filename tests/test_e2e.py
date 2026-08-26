@@ -22,13 +22,12 @@ def mock_ingestor():
 
 
 @pytest.fixture
-def mock_llm():
-    with patch("spite.llm.LLMInterface") as MockLLM:
-        instance = MockLLM.return_value
-        yield instance
+def mock_dspy_config():
+    with patch("spite.llm.configure_dspy") as MockConfigure:
+        yield MockConfigure
 
 
-def test_process_phase_1(mock_ingestor, mock_llm):
+def test_process_phase_1(mock_ingestor, mock_dspy_config):
     mock_specs = {
         "REQUIREMENTS.md": "Fake reqs",
         "IMPLEMENTATION_PLAN.md": "Fake plan",
@@ -65,7 +64,7 @@ def test_process_phase_1(mock_ingestor, mock_llm):
         assert len(response.content) > 0
 
 
-def test_process_phase_2(mock_ingestor, mock_llm):
+def test_process_phase_2(mock_ingestor, mock_dspy_config):
     # Mock Dirty Agent output
     mock_specs = {
         "REQUIREMENTS.md": "Fake reqs",
@@ -118,7 +117,7 @@ def test_process_phase_2(mock_ingestor, mock_llm):
                     assert "Do a good job." in called_specs["AGENTS.md"]
 
 
-def test_process_phase_3(mock_ingestor, mock_llm):
+def test_process_phase_3(mock_ingestor, mock_dspy_config):
     mock_specs = {
         "REQUIREMENTS.md": "Fake reqs",
         "IMPLEMENTATION_PLAN.md": "Fake plan",
