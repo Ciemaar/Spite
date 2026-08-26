@@ -138,13 +138,13 @@ async def process(
 
     from .analyzer import DirtyAgent
     from .ingest import IngestionManager
-    from .llm import LLMInterface
+    from .llm import configure_dspy
     from .packager import create_zip_payload
 
     # Setup
     ingestor = IngestionManager()
-    llm = LLMInterface(host=settings.ollama_host, model=ai_model)
-    dirty_agent = DirtyAgent(llm=llm)
+    configure_dspy(host=settings.ollama_host, model=ai_model)
+    dirty_agent = DirtyAgent()
 
     try:
         await stream.add_message("<div>Starting ingestion...</div>")
@@ -219,7 +219,7 @@ async def process(
 
         repo_path = init_local_repo()
         clean_agent = CleanAgent(
-            llm=llm, dirty_agent=dirty_agent, max_turns=settings.max_qa_turns
+            dirty_agent=dirty_agent, max_turns=settings.max_qa_turns
         )
 
         await clean_agent.generate_codebase(specs, repo_path)
@@ -308,15 +308,15 @@ async def process_phase2(
 
     from .analyzer import DirtyAgent
     from .generator import CleanAgent
-    from .llm import LLMInterface
+    from .llm import configure_dspy
     from .packager import init_local_repo
 
     if client_id not in global_streams:
         global_streams[client_id] = ProgressStream()
     stream = global_streams[client_id]
 
-    llm = LLMInterface(host=settings.ollama_host, model=ai_model)
-    dirty_agent = DirtyAgent(llm=llm)
+    configure_dspy(host=settings.ollama_host, model=ai_model)
+    dirty_agent = DirtyAgent()
 
     try:
         base_dir = Path("data/downloads").resolve()
@@ -335,7 +335,7 @@ async def process_phase2(
         await stream.add_message("<div>Starting clean-room implementation...</div>")
         repo_path = init_local_repo()
         clean_agent = CleanAgent(
-            llm=llm, dirty_agent=dirty_agent, max_turns=settings.max_qa_turns
+            dirty_agent=dirty_agent, max_turns=settings.max_qa_turns
         )
 
         await clean_agent.generate_codebase(specs, repo_path)
@@ -391,14 +391,14 @@ async def process_phase3(
 
     from .analyzer import DirtyAgent
     from .generator import CleanAgent
-    from .llm import LLMInterface
+    from .llm import configure_dspy
 
     if client_id not in global_streams:
         global_streams[client_id] = ProgressStream()
     stream = global_streams[client_id]
 
-    llm = LLMInterface(host=settings.ollama_host, model=ai_model)
-    dirty_agent = DirtyAgent(llm=llm)
+    configure_dspy(host=settings.ollama_host, model=ai_model)
+    dirty_agent = DirtyAgent()
 
     try:
         import tempfile
@@ -422,7 +422,7 @@ async def process_phase3(
 
         await stream.add_message("<div>Applying AI enhancements...</div>")
         clean_agent = CleanAgent(
-            llm=llm, dirty_agent=dirty_agent, max_turns=settings.max_qa_turns
+            dirty_agent=dirty_agent, max_turns=settings.max_qa_turns
         )
 
         await clean_agent.apply_improvements(specs, Path(repo_path))

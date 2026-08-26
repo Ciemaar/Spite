@@ -1,11 +1,17 @@
 import logging
-import re
 
 import dspy  # type: ignore
-
-from .llm import LLMInterface
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
+
+
+class GeneratedFilesOutput(BaseModel):
+    """The structured files dictionary output."""
+
+    files: dict[str, str] = Field(
+        description="A dictionary mapping the exact requested file paths to their markdown contents."
+    )
 
 
 class GenerateSpecs(dspy.Signature):
@@ -13,15 +19,8 @@ class GenerateSpecs(dspy.Signature):
 
     You are the 'Dirty' Agent in a clean-room software recreation system.
     Your job is to analyze public repositories and documentation, then write highly detailed specifications.
-    You MUST output your response as 8 distinct Markdown files.
-    Use the following format to delineate files:
 
-    ```markdown
-    # filepath: filename.md
-    [file content here]
-    ```
-
-    You MUST generate EXACTLY these 8 files:
+    You MUST generate EXACTLY these 8 files in your structured output:
     1. REQUIREMENTS.md: Functional and non-functional requirements.
     2. TESTING.md: Testing strategy.
     3. IMPLEMENTATION_PLAN.md: Step-by-step plan.
@@ -38,8 +37,8 @@ class GenerateSpecs(dspy.Signature):
     feedback: str = dspy.InputField(
         desc="Any feedback on missing files to correct in this attempt. Can be empty."
     )
-    markdown_files_output: str = dspy.OutputField(
-        desc="The 8 generated markdown files delineated by the `# filepath:` markdown code block format."
+    generated_files: GeneratedFilesOutput = dspy.OutputField(
+        desc="The structured 8 generated markdown files."
     )
 
 
@@ -67,9 +66,8 @@ class AnswerQuestion(dspy.Signature):
 class DirtyAgent:
     """The agent responsible for analyzing the dirty context and creating specs."""
 
-    def __init__(self, llm: LLMInterface):
-        """Initialize the dirty agent with an LLM interface."""
-        self.llm = llm
+    def __init__(self):
+        """Initialize the dirty agent."""
         self.context_parts: list[str] = []
 
     async def analyze(
@@ -79,10 +77,6 @@ class DirtyAgent:
         search_context: str,
     ) -> dict[str, str]:
         """Analyze the context and generate 8 specification files."""
-        # Ensure DSPy is configured globally for this execution
-        if self.llm.dspy_lm:
-            dspy.settings.configure(lm=self.llm.dspy_lm)
-
         # Truncate context to avoid blowing up context window
         self.context_parts = []
         for path, content in list(repo_files.items())[:10]:
@@ -109,18 +103,18 @@ class DirtyAgent:
             "SOURCE_EXCLUDES.txt",
         }
 
-        # Use ChainOfThought to force the model to plan out its markdown generation
+        # Use TypedPredictor with ChainOfThought to enforce Pydantic structured output natively
+        # Fallback since dspy.TypedPredictor doesn't exist explicitly in >=2.5.
+        # dspy.Predict naturally uses Pydantic OutputFields when typed.
         generate_specs = dspy.ChainOfThought(GenerateSpecs)
 
         # Try up to 3 times to get all 8 files
         max_retries = 3
         feedback = ""
         for attempt in range(max_retries):
-            # Using synchronous DSPy prediction. LiteLLM under the hood handles async if we needed to await it,
-            # but DSPy's standard Predict is sync.
+            # Using synchronous DSPy prediction. LiteLLM under the hood handles async if we needed to await it
             result = generate_specs(context=context_str, feedback=feedback)
-            response = result.markdown_files_output
-            files = self._parse_files(response)
+            files = result.generated_files.files
 
             missing = required_files - set(files.keys())
             if not missing:
@@ -142,9 +136,6 @@ class DirtyAgent:
 
     async def answer_question(self, question: str, specs: dict[str, str]) -> str:
         """Answer a question from the Clean Agent about observable behavior."""
-        if self.llm.dspy_lm:
-            dspy.settings.configure(lm=self.llm.dspy_lm)
-
         context = "Context:\n\n" + "\n\n".join(self.context_parts)
         spec_overview = specs.get("SYSTEM_OVERVIEW.md", "")
 
@@ -154,16 +145,3 @@ class DirtyAgent:
         )
 
         return result.answer
-
-    def _parse_files(self, llm_output: str) -> dict[str, str]:
-        """Parse the Markdown codeblocks with filepaths into a dictionary."""
-        files: dict[str, str] = {}
-        pattern = r"```(?:markdown)?\s*#\s*filepath:\s*(.*?)\s*\n(.*?)```"
-        matches = re.finditer(pattern, llm_output, re.DOTALL)
-
-        for match in matches:
-            filepath = match.group(1).strip()
-            content = match.group(2).strip()
-            files[filepath] = content
-
-        return files

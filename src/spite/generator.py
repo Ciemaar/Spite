@@ -1,12 +1,9 @@
 import logging
-import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import dspy  # type: ignore
 from pydantic import BaseModel, Field
-
-from .llm import LLMInterface
 
 if TYPE_CHECKING:
     from .analyzer import DirtyAgent
@@ -14,50 +11,39 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class CleanAgentActionOutput(BaseModel):
-    """The action the Clean Agent wants to take."""
-
-    question: str | None = Field(
-        default=None,
-        description="The question to ask the Dirty Agent. Null if you are ready to write code.",
-    )
-    code: str | None = Field(
-        default=None,
-        description="The complete codebase in markdown block format. Null if you need to ask a question.",
-    )
-
-
-class CleanAgentAction(dspy.Signature):
-    r"""Ask a question or provide the codebase based on specs.
+class CleanAgentBrainstorm(dspy.Signature):
+    r"""Reason about the software specifications and implement the codebase.
 
     You are the 'Clean' Agent in a clean-room software recreation system.
     Your job is to implement the software exactly according to the provided specs.
     You MUST NOT access the internet or the original source code.
     You have the opportunity to ask the 'Dirty' Agent questions about public, observable behavior.
-    You must decide to either ask a question OR write the code.
+
+    If you do not have enough information, use the `ask_dirty_agent` tool.
+    Once you have enough information, output the complete codebase in markdown format.
     """
 
     requirements: str = dspy.InputField(desc="The software requirements.")
     plan: str = dspy.InputField(desc="The implementation plan.")
     agent_instructions: str = dspy.InputField(desc="The agent instructions.")
-    qa_history: str = dspy.InputField(
-        desc="The history of questions asked and answers received so far."
+    markdown_files_output: str = dspy.OutputField(
+        desc="The complete codebase in markdown block format."
     )
-    action: CleanAgentActionOutput = dspy.OutputField(
-        desc="The structured action output."
+
+
+class CodebaseOutput(BaseModel):
+    """A dictionary mapping file paths to their string contents."""
+
+    files: dict[str, str] = Field(
+        description="A dictionary mapping the exact requested file paths to their code contents."
     )
 
 
 class FinalCodeGeneration(dspy.Signature):
-    """Output the final codebase using markdown blocks.
+    """Output the final codebase using the structured files format.
 
     You are the 'Clean' Agent in a clean-room software recreation system.
-    Please output the complete codebase now.
-    Output the files using the standard markdown block format:
-    ```markdown
-    # filepath: filename.ext
-    [code]
-    ```.
+    Please output the complete codebase now into the dictionary.
     """
 
     requirements: str = dspy.InputField(desc="The software requirements.")
@@ -66,8 +52,8 @@ class FinalCodeGeneration(dspy.Signature):
     qa_history: str = dspy.InputField(
         desc="The history of questions asked and answers received so far."
     )
-    markdown_files_output: str = dspy.OutputField(
-        desc="The complete codebase in markdown format."
+    generated_codebase: CodebaseOutput = dspy.OutputField(
+        desc="The structured complete codebase files mapping."
     )
 
 
@@ -76,93 +62,83 @@ class ApplyImprovements(dspy.Signature):
 
     You are the 'Clean' Agent.
     Your job is to apply the provided improvements to the existing codebase.
-    Output the updated files using the standard markdown block format:
-    ```markdown
-    # filepath: filename.ext
-    [code]
-    ```.
+    Output the updated files into the structured dictionary format.
     """
 
     current_codebase: str = dspy.InputField(desc="The current codebase context.")
     improvements: str = dspy.InputField(desc="The improvements to apply.")
-    updated_files_output: str = dspy.OutputField(
-        desc="The updated files in markdown format."
+    updated_files: CodebaseOutput = dspy.OutputField(
+        desc="The structured dictionary of updated files."
     )
 
 
 class CleanAgent:
     """The agent responsible for implementing the clean-room codebase."""
 
-    def __init__(
-        self, llm: LLMInterface, dirty_agent: "DirtyAgent", max_turns: int = 3
-    ):
-        """Initialize the clean agent with its own LLM and access to the dirty Agent."""
-        self.llm = llm
+    def __init__(self, dirty_agent: "DirtyAgent", max_turns: int = 3):
+        """Initialize the clean agent with access to the dirty Agent."""
         self.dirty_agent = dirty_agent
         self.max_turns = max_turns
         self.qa_log: list[str] = []
 
     async def generate_codebase(self, specs: dict[str, str], repo_path: Path) -> None:
         """Generate the codebase via Q&A and write to the repo path."""
-        # Ensure DSPy is configured globally for this execution
-        if self.llm.dspy_lm:
-            dspy.settings.configure(lm=self.llm.dspy_lm)
-
-        # Setup clean agent prompt
         implementation_plan = specs.get("IMPLEMENTATION_PLAN.md", "")
         requirements = specs.get("REQUIREMENTS.md", "")
         agents_instructions = specs.get("AGENTS.md", "")
 
-        qa_history_str = ""
-        # Using ChainOfThought. DSPy > 2.5 natively handles Pydantic OutputFields on predictors.
-        determine_action = dspy.ChainOfThought(CleanAgentAction)
-        # Final code generation should use ChainOfThought for better layout reasoning
-        generate_final_code = dspy.ChainOfThought(FinalCodeGeneration)
+        def ask_dirty_agent(question: str) -> str:
+            """Ask the Dirty Agent a question about the repository's observable behavior."""
+            logger.info(f"Clean Agent asks: {question}")
+            self.qa_log.append(f"**Clean Agent:** {question}")
 
-        # Q&A Loop
-        for turn in range(self.max_turns):
-            logger.info(f"Clean Agent turn {turn + 1}")
+            import asyncio
 
-            result = determine_action(
-                requirements=requirements,
-                plan=implementation_plan,
-                agent_instructions=agents_instructions,
-                qa_history=qa_history_str
-                if qa_history_str
-                else "No questions asked yet.",
-            )
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = None
 
-            action_output: CleanAgentActionOutput = result.action
+            if loop and loop.is_running():
+                # Since the tool is invoked synchronously by DSPy, but the agent method is async,
+                # we run the coroutine in a new short-lived loop or nested event loop if necessary.
+                # However, nest_asyncio isn't here. A simpler approach for DSPy tools that call async methods
+                # is to use asyncio.run if we aren't already in a running loop thread,
+                # but we ARE in a running loop (FastAPI).
+                import nest_asyncio  # type: ignore
 
-            # Use structured Pydantic object
-            if action_output.question and not action_output.code:
-                question = action_output.question
-
-                logger.info(f"Clean Agent asks: {question}")
-                self.qa_log.append(f"**Clean Agent:** {question}")
-
-                # Ask Dirty Agent
-                dirty_answer = await self.dirty_agent.answer_question(question, specs)
-                logger.info(f"Dirty Agent answers: {dirty_answer}")
-                self.qa_log.append(f"**Dirty Agent:** {dirty_answer}")
-
-                qa_history_str += f"\nQ: {question}\nA: {dirty_answer}\n"
+                nest_asyncio.apply()
+                answer = asyncio.run(self.dirty_agent.answer_question(question, specs))
             else:
-                # Assume it's ready to output code or already did
-                logger.info("Clean Agent is ready to output code.")
-                break
+                answer = asyncio.run(self.dirty_agent.answer_question(question, specs))
 
-        # Final Generation
+            logger.info(f"Dirty Agent answers: {answer}")
+            self.qa_log.append(f"**Dirty Agent:** {answer}")
+            return answer
+
+        # Create ReAct module with the tool
+        agent = dspy.ReAct(
+            CleanAgentBrainstorm, tools=[ask_dirty_agent], max_iters=self.max_turns
+        )
+
+        # Execute the agent loop
+        logger.info("Starting Clean Agent ReAct loop.")
+        agent(
+            requirements=requirements,
+            plan=implementation_plan,
+            agent_instructions=agents_instructions,
+        )
+
+        # For the final code execution, we will still pass the history generated to the explicitly typed predictor
+        generate_final_code = dspy.ChainOfThought(FinalCodeGeneration)
         final_result = generate_final_code(
             requirements=requirements,
             plan=implementation_plan,
             agent_instructions=agents_instructions,
-            qa_history=qa_history_str if qa_history_str else "No questions asked.",
+            qa_history="\n".join(self.qa_log) if self.qa_log else "No questions asked.",
         )
-        final_code_response = final_result.markdown_files_output
 
-        # Parse and write files
-        files = self._parse_files(final_code_response)
+        files = final_result.generated_codebase.files
         self._write_files(files, repo_path)
 
         # Write QA Log
@@ -176,19 +152,6 @@ class CleanAgent:
         bib_content += "1. Provided Markdown Specifications (REQUIREMENTS.md, IMPLEMENTATION_PLAN.md)\n"
         bib_content += "2. Answers from Dirty Agent\n"
         self._write_files({"CLEAN_BIBLIOGRAPHY.md": bib_content}, repo_path)
-
-    def _parse_files(self, llm_output: str) -> dict[str, str]:
-        """Parse the Markdown codeblocks with filepaths into a dictionary."""
-        files: dict[str, str] = {}
-        pattern = r"```(?:markdown)?\s*#\s*filepath:\s*(.*?)\s*\n(.*?)```"
-        matches = re.finditer(pattern, llm_output, re.DOTALL)
-
-        for match in matches:
-            filepath = match.group(1).strip()
-            content = match.group(2).strip()
-            files[filepath] = content
-
-        return files
 
     def _write_files(self, files: dict[str, str], repo_path: Path) -> None:
         """Write the files to the local repository directory securely."""
@@ -221,10 +184,6 @@ class CleanAgent:
         if not improvements:
             return
 
-        # Ensure DSPy is configured globally for this execution
-        if self.llm.dspy_lm:
-            dspy.settings.configure(lm=self.llm.dspy_lm)
-
         # Read current files
         current_files = ""
         for path in repo_path.rglob("*"):
@@ -240,11 +199,10 @@ class CleanAgent:
                 except UnicodeDecodeError:
                     pass
 
-        apply_improvements_pred = dspy.Predict(ApplyImprovements)
+        apply_improvements_pred = dspy.ChainOfThought(ApplyImprovements)
         result = apply_improvements_pred(
             current_codebase=current_files, improvements=improvements
         )
 
-        response = result.updated_files_output
-        files = self._parse_files(response)
+        files = result.updated_files.files
         self._write_files(files, repo_path)

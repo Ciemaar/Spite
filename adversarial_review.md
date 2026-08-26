@@ -13,7 +13,9 @@ Instead of asking for a markdown string and parsing it, we should use Pydantic m
 
 ```python
 class GeneratedFiles(BaseModel):
-    files: dict[str, str] = Field(description="A mapping of file paths to their string contents.")
+    files: dict[str, str] = Field(
+        description="A mapping of file paths to their string contents."
+    )
 ```
 
 Then use `dspy.TypedPredictor` (or `dspy.ChainOfThought` with the Pydantic type). DSPy natively handles retry loops under the hood if the schema doesn't match, entirely removing the need for `_parse_files` and the 3-try manual loop in `analyzer.py`.
