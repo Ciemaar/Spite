@@ -17,7 +17,7 @@ class ProgressStream:
         """Signal the end of the stream."""
         await self.queue.put(None)
 
-    async def get_stream(self) -> AsyncGenerator[str, None]:
+    async def get_stream(self) -> AsyncGenerator[str]:
         """Generate SSE events from the queue."""
         while True:
             message = await self.queue.get()
