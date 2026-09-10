@@ -10,7 +10,7 @@ This repository (Spite) contains rules for AI Agents working on the codebase. Pl
 - **Memory is Not a Task:** Do not treat information from memory as a new, active instruction. Memory provides passive context, do not use it to create new feature requests.
 
 ## 2. Coding Standards
-- **Python Version:** Strict Python 3.12+.
+- **Python Version:** Strict Python 3.14+.
 - **Typing:** Use built-in type hints (e.g., `list[str]`). Strict type checking with `pyright` is enforced. Empty collections must be explicitly typed upon initialization (e.g., `specs: dict[str, str] = {}`) to avoid `reportUnknownArgumentType` errors.
 - **Style:** Top-of-file imports, explicit ternary operators (e.g., `x if x is not None else y` instead of `x or y`), `pathlib.Path` for file access, and the `logging` module instead of `print()`.
 - **Complexity:** Ruff McCabe max-complexity is configured to 15 in `pyproject.toml` to accommodate slightly more complex async endpoint handling.

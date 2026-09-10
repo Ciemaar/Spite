@@ -9,7 +9,7 @@ Please strictly adhere to the following guidelines and instructions as you imple
 - **Name:** Spite
 - **Purpose:** Provide a legal "clean room" recreation of open-source dependencies by analyzing only public interfaces and generating a new implementation from scratch using AI.
 - **Tech Stack:**
-  - Backend: Python 3.12+ with FastAPI.
+  - Backend: Python 3.14+ with FastAPI.
   - Frontend: HTMX with a minimal CSS framework (Tailwind CSS or PicoCSS). Templating via Jinja2.
   - AI Integration: Local Ollama (Primary) and user-provided API keys (OpenAI/Anthropic).
   - Dependency Management: exclusively `uv`, strict `src`-based layout, single `pyproject.toml`. Configuration parsed and validated strictly via `pydantic-settings`.
