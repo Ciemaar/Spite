@@ -4,26 +4,11 @@ from unittest.mock import MagicMock
 
 from spite.analyzer import DirtyAgent
 from spite.generator import CleanAgent
-from spite.llm import LLMInterface
-
-
-def test_parse_files():
-    mock_dirty = MagicMock(spec=DirtyAgent)
-    agent = CleanAgent(LLMInterface("fake", "fake"), mock_dirty)
-    llm_output = """
-```markdown
-# filepath: code.py
-print("hello")
-```
-"""
-    files = agent._parse_files(llm_output)
-    assert "code.py" in files
-    assert files["code.py"] == 'print("hello")'
 
 
 def test_write_files():
     mock_dirty = MagicMock(spec=DirtyAgent)
-    agent = CleanAgent(LLMInterface("fake", "fake"), mock_dirty)
+    agent = CleanAgent(mock_dirty)
     with tempfile.TemporaryDirectory() as tmpdir:
         repo_path = Path(tmpdir)
         files = {"src/code.py": "print('hello')"}

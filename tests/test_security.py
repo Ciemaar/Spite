@@ -7,12 +7,11 @@ import pytest
 from spite.analyzer import DirtyAgent
 from spite.generator import CleanAgent
 from spite.ingest import IngestionManager
-from spite.llm import LLMInterface
 
 
 def test_path_traversal_prevention():
     mock_dirty = MagicMock(spec=DirtyAgent)
-    agent = CleanAgent(LLMInterface("fake", "fake"), mock_dirty)
+    agent = CleanAgent(mock_dirty)
     files = {
         "../../../etc/passwd": "hacked",
         "/absolute/path/test.txt": "hacked again",
