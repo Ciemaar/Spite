@@ -9,8 +9,8 @@ Please strictly adhere to the following guidelines and instructions as you imple
 - **Name:** Spite
 - **Purpose:** Provide a legal "clean room" recreation of open-source dependencies by analyzing only public interfaces and generating a new implementation from scratch using AI.
 - **Tech Stack:**
-  - Backend: Python 3.14+ with FastAPI.
-  - Frontend: HTMX with a minimal CSS framework (Tailwind CSS or PicoCSS). Templating via Jinja2.
+  - Backend: Python 3.14+ (Core application logic separated from UI).
+  - Frontend: A Python GUI framework (e.g., PyQt6, PySide6, or CustomTkinter).
   - AI Integration: Local Ollama (Primary) and user-provided API keys (OpenAI/Anthropic).
   - Dependency Management: exclusively `uv`, strict `src`-based layout, single `pyproject.toml`. Configuration parsed and validated strictly via `pydantic-settings`.
 
@@ -46,18 +46,16 @@ You must build three distinct delivery phases and support a workflow that allows
   - It performs a secondary execution loop to aggressively apply these improvements to the codebase, which may include making breaking changes to the original API or functionality.
   - It updates `CLEAN_BIBLIOGRAPHY.md` and commits these enhancements to the local Git repository.
 
-### 2.3 Frontend Requirements (HTMX)
+### 2.3 Frontend Requirements (Python GUI)
 
-- Build a clean, professional web interface. Avoid any satirical or "evil" tone; keep it strictly utilitarian and professional.
-- Use HTMX for dynamic updates. Specifically, use HTMX Server-Sent Events (SSE) or polling to provide the user with real-time feedback during the long-running analysis and generation phases (e.g., "Fetching repository...", "Analyzing public API...", "Generating requirements...", "Writing code...", "Applying improvements...").
+- Build a clean, professional desktop interface. Avoid any satirical or "evil" tone; keep it strictly utilitarian and professional.
+- Use a Python GUI framework (like PyQt6 or CustomTkinter). Implement thread-safe GUI signals to provide the user with real-time feedback during the long-running analysis and generation phases (e.g., "Fetching repository...", "Analyzing public API...", "Generating requirements...", "Writing code...", "Applying improvements...").
 - Include form inputs for:
   - Target GitHub URL.
   - Supplemental URLs (for public documentation, discussion forums) and a checkbox to enable automated web search (enabled by default).
   - AI Provider Selection (Ollama model dropdown or API Key input field). Configured via `models.json`.
   - Target Phase Selector (Phase 1: Zip, Phase 2: Full Repo, Phase 3: Enhanced Repo), designed to support sequential progression between phases.
-- **HTMX Limitations & Workarounds:**
-  - HTMX forms triggering long-running processes or file downloads must use the `hx-disabled-elt` attribute (e.g., `hx-disabled-elt="button[type='submit']"`) to disable submit buttons and prevent double-submission bugs.
-  - HTMX `hx-post` requests cannot natively handle binary file downloads. For file downloads, save the generated file to disk (e.g., `data/downloads/`) and return an HTML response containing an `<a>` tag with a download link instead of returning a `StreamingResponse`.
+- Ensure the main UI thread is not blocked by background generation or fetching tasks.
 
 ## 3. Development Workflow & Rules
 
@@ -67,7 +65,7 @@ You must build three distinct delivery phases and support a workflow that allows
    - Install dependencies: `uv sync --all-extras --dev`
    - Run tests: `uv run pytest`, `uv run tox`
    - Linter/Formatter: strictly uses `ruff` (including pydocstyle D rules), `mdformat` for Markdown, and `pyright` in strict mode. Run `uv run ruff check --fix .` and `uv run ruff format .` to fix issues automatically.
-   - Run locally: `uv run uvicorn spite.main:app --host 127.0.0.1 --port 8000`
+   - Run locally: `uv run python -m spite.main`
    - Pre-commit hooks are required.
 1. **Coding Standards:**
    - Use built-in type hints (e.g., `list[str]`).
@@ -83,13 +81,13 @@ You must build three distinct delivery phases and support a workflow that allows
    - `analyze.py`: The "Dirty" agent logic for generating specifications.
    - `generate.py`: The "Clean" agent logic for executing the specifications (Phase 2 & 3).
    - `package.py`: Logic for creating the Zip archive (Phase 1) and Git repository.
-   - `web.py`: The FastAPI application and HTMX endpoints.
+   - `ui.py`: The Python GUI application entrypoint.
 1. **Error Handling & Performance:** Gracefully handle GitHub API rate limits, large repositories, and LLM timeout/context window errors. The extraction and analysis phase is computationally intensive and expected to take hours to complete; account for this in performance requirements.
 1. **Security:** Do not execute any code fetched from the target repository. The analysis must be purely static.
 1. **Agentic Workflows:** Always start tasks with a deep planning mode: ask clarifying questions to fully understand requirements before using the `set_plan` tool. Once the plan is approved, execute autonomously. Document AI tools and context files (`AGENTS.md`, `README.md`, `SOURCES.md`, `USER_GUIDE.md`, `DEVELOPER_GUIDE.md`) and session history in `prompts/`, `plans/`, and `reports/`.
 
 ## 4. Getting Started
 
-To begin, please review the `REQUIREMENTS.md` and `IMPLEMENTATION_PLAN.md` files in this repository. Start by setting up the Python backend and a basic HTMX skeleton before tackling the complex AI orchestration.
+To begin, please review the `REQUIREMENTS.md` and `IMPLEMENTATION_PLAN.md` files in this repository. Start by setting up the Python backend and a basic Python GUI skeleton before tackling the complex AI orchestration.
 
 Good luck, and build Spite with precision and care.

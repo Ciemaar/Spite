@@ -4,14 +4,14 @@ This document breaks down the development of Spite into actionable, sequential s
 
 ## Phase 1: Project Setup and Foundational Architecture
 
-1. **Initialize Project:** Create a standard Python virtual environment (or use Poetry/uv). Install core dependencies: `fastapi` (or `flask`), `uvicorn`, `httpx` (for GitHub API), and any chosen LLM interface library (e.g., `ollama` python package, `openai`).
-1. **Directory Structure:** Set up directories for `src/` (backend logic), `templates/` (HTML/HTMX), `static/` (CSS/JS), and `tests/`.
-1. **Basic UI Skeleton:** Create a base HTML template with HTMX included (via CDN) and a minimal CSS framework (like Tailwind or PicoCSS). Implement a simple form with:
-   - Input for GitHub URL.
+1. **Initialize Project:** Create a standard Python virtual environment (or use Poetry/uv). Install core dependencies: `PyQt6` (or `CustomTkinter`), `httpx` (for GitHub API), and any chosen LLM interface library (e.g., `ollama` python package, `openai`).
+1. **Directory Structure:** Set up directories for `src/` (core logic), `ui/` (GUI components), and `tests/`.
+1. **Basic UI Skeleton:** Create a main application window using the chosen GUI framework. Implement a simple form with:
+   - Input field for GitHub URL.
    - Text area/input for supplemental URLs (public documentation, discussion forums) and a checkbox to enable automated web search (enabled by default).
    - Dropdown/Input for AI Provider (Ollama model selection or API Key).
    - Radio buttons/Dropdown for Target Phase (Phase 1: Zip, Phase 2: Full Repo, Phase 3: Enhanced Repo).
-1. **FastAPI Routes:** Create the basic routes to serve the UI and handle form submissions via HTMX.
+1. **UI Integration:** Connect the UI signals (like button clicks) to the core application functions.
 
 ## Phase 2: Ingestion and "Dirty" Analysis
 
@@ -27,16 +27,16 @@ This document breaks down the development of Spite into actionable, sequential s
    - The prompt must mandate outputting exactly eight sections (or distinct JSON keys): Requirements, Testing Strategy, Implementation Plan, Agent Instructions, Improvements (opportunities for improvement based on usage and features, e.g., behavioral changes), a Dirty Bibliography (links and commentary on sources considered), a System Overview (original descriptions and a proposed replacement name), and Source Excludes (a list of known original sources/URLs to avoid).
    - Implement logic to parse this response into eight distinct files (including `IMPROVEMENTS.md`, `DIRTY_BIBLIOGRAPHY.md`, `SYSTEM_OVERVIEW.md`, and `SOURCE_EXCLUDES.txt`).
 
-## Phase 3: Delivery Mechanism 1 (Phase 1 - Zip Generation)
+## Phase 3: Delivery Option 1 (Zip Generation)
 
 1. **Packaging Module (`src/packager.py`):**
    - Implement a function `create_zip_payload(specs_dict)`. It should take the eight distinct files from the Analyzer and create an in-memory `.zip` file (using Python's `zipfile` module).
-1. **API Integration:**
-   - Update the FastAPI route handling the form submission. If "Phase 1" is the target, trigger the Ingest -> Analyze -> Package pipeline.
-   - Return the generated `.zip` file to the user as a downloadable response, alongside a UI button to "Proceed to Phase 2".
-   - *UX Improvement:* Use HTMX to show a loading spinner or progress text ("Analyzing repository...") while this backend process runs.
+1. **UI Integration:**
+   - Update the UI event handler for the form submission. If "Phase 1" is selected, trigger the Ingest -> Analyze -> Package pipeline in a background thread to keep the UI responsive.
+   - Use a GUI file dialog to allow the user to save the generated `.zip` file.
+   - *UX Improvement:* Show a GUI progress bar or status label ("Analyzing repository...") while this background process runs.
 
-## Phase 4: Delivery Mechanism 2 (Phase 2 - Full AI Implementation)
+## Phase 4: Delivery Option 2 (Full AI Implementation)
 
 1. **Git Initialization:**
    - In `src/packager.py`, add a function `init_local_repo()`. This should create a new temporary directory on the local filesystem and run `git init`.
@@ -52,23 +52,23 @@ This document breaks down the development of Spite into actionable, sequential s
    - Parse the LLM's code output.
    - Write the generated files (including `CLEAN_DIRTY_QA_LOG.md`) to the newly initialized Git directory.
    - Run `git add .` and `git commit -m "Initial clean-room implementation"`.
-1. **API Integration:**
-   - Update the FastAPI route. If "Phase 2" is the target, ensure Phase 1 is complete, then trigger: Generate Code -> Commit.
-   - Return an HTMX response displaying the local path to the generated Git repository, indicating success, alongside a UI button to "Proceed to Phase 3".
+1. **UI Integration:**
+   - Update the UI event handler. If "Phase 2" is selected, run the full pipeline (Ingest -> Analyze -> Generate Code -> Commit) in a background thread.
+   - Display a success message box containing the local path to the generated Git repository upon completion. Provide a UI button to "Proceed to Phase 3".
 
-## Phase 5: Delivery Mechanism 3 (Phase 3 - AI Enhancement)
+## Phase 5: Delivery Option 3 (AI Enhancement)
 
 1. **Enhancement Loop (`src/generator.py`):**
    - After Phase 4 completes, if "Phase 3" is the target, supply the Clean Agent with the generated `IMPROVEMENTS.md`.
    - Instruct the LLM to iteratively apply the improvements to the newly generated codebase, making API or functionality changes as required.
    - Instruct the Clean agent to update the `CLEAN_BIBLIOGRAPHY.md` with any new sources or considerations.
    - Run tests (or ask the LLM to update the tests) and commit the changes as subsequent commits to the same Git repository.
-1. **API Integration:**
-   - Update the FastAPI route. If "Phase 3" is triggered, run the final pipeline: Apply Improvements -> Commit.
-   - Return an HTMX response displaying the local path to the generated, enhanced Git repository.
+1. **UI Integration:**
+   - Update the UI event handler. If "Phase 3" is triggered, run the final pipeline in a background thread: Apply Improvements -> Commit.
+   - Display a success message box containing the local path to the generated, enhanced Git repository.
 
 ## Phase 6: Refinement and Testing
 
 1. **Testing:** Execute the unit and integration tests defined in `TESTING.md`. Ensure the strict filtering in Phase 2 holds up.
-1. **UX Polish:** Enhance the HTMX interactions. Implement Server-Sent Events (SSE) to stream progress updates (e.g., "Fetching from GitHub...", "Analyzing public API...", "Generating specifications...", "Writing code...", "Applying improvements...").
+1. **UX Polish:** Enhance the UI interactions. Implement thread-safe GUI signals to update progress indicators smoothly (e.g., "Fetching from GitHub...", "Analyzing public API...", "Generating specifications...", "Writing code...", "Applying improvements...").
 1. **Documentation:** Finalize the project's own `README.md` explaining how to install, run, and use Spite.
