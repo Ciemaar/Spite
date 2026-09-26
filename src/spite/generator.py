@@ -75,7 +75,7 @@ class ApplyImprovements(dspy.Signature):
 class CleanAgent:
     """The agent responsible for implementing the clean-room codebase."""
 
-    def __init__(self, dirty_agent: "DirtyAgent", max_turns: int = 3):
+    def __init__(self, dirty_agent: DirtyAgent, max_turns: int = 3):
         """Initialize the clean agent with access to the dirty Agent."""
         self.dirty_agent = dirty_agent
         self.max_turns = max_turns
