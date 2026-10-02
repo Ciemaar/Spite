@@ -21,14 +21,17 @@ Spite primarily relies on local LLMs orchestrated via Ollama to maintain a true 
 These models will comfortably fit within your 6GB VRAM limit, leaving plenty of headroom for the KV cache (allowing for larger context windows, useful for coding and RAG).
 
 - **Phi-4-mini-instruct (3.8B)**
+
   - **Why:** Microsoft built this specifically to run on constrained hardware (even CPU-only). At Q4, it only needs a couple of gigabytes of RAM.
   - **Use Case:** Everyday coding help, drafting, and general assistance. It is extremely fast and won't crash your GPU.
 
 - **Qwopus-3.5-Coder-4B**
+
   - **Why:** The Qwen family is excellent for coding. This 4B model will easily fit in 6GB and provide a solid context window for agentic tasks.
   - **Use Case:** Agentic coding and tasks requiring longer context windows without hitting OOM (Out Of Memory) errors.
 
 - **Minimax-m2.7 (2.7B)**
+
   - **Why:** A highly compact model that uses even less VRAM, leaving near-maximal headroom for the KV cache.
   - **Pros:** Exceptional token-per-second performance. Highly efficient for rapid iteration in constrained environments.
   - **Cons:** Struggles with complex reasoning, high-level architectural orchestration, and strict, nuanced coding standards compared to 7B/8B class models.
@@ -39,12 +42,14 @@ These models will comfortably fit within your 6GB VRAM limit, leaving plenty of 
 These models represent the absolute ceiling of what a 6GB card can run. You *must* use aggressive quantization (Q4_K_M) and strictly limit your context window to prevent spilling to system RAM.
 
 - **Llama 3 (8B) / Llama 3.3 8B at Q4_K_M - **Default****
+
   - Llama 3 is the default and a strong, general-purpose instruction-following model used by Spite.
   - **Pros:** Good at general reasoning, summarization, and formatting (e.g., Markdown generation). Sufficiently capable of managing the Q&A loop between Dirty and Clean agents.
   - **Cons:** May sometimes struggle with highly complex architectural decisions or strict, nuanced coding standards compared to specialized coding models. Very tight fit on 6GB VRAM.
   - **Best Used For:** All phases, but particularly effective in Phase 1 (Specification Generation) where general reasoning and document structuring are paramount.
 
 - **Qwen 2.5-Coder 7B (or Qwen3 7B) at Q4_K_M**
+
   - Qwen 2.5 Coder is a specialized model focused heavily on code generation and understanding.
   - **Pros:** Often produces highly accurate code with fewer syntax errors in strict environments. Can be faster at generating code blocks compared to general-purpose models of similar size.
   - **Cons:** While great at coding, it may sometimes struggle with the high-level orchestration, planning, and conversational nuances required in the Clean/Dirty agent Q&A loop.
@@ -64,13 +69,13 @@ While Spite focuses on local execution, it supports cloud providers via API keys
 
 ### 2.1 OpenAI (GPT-4o)
 
-*   **Pros:** Industry-leading reasoning, coding, and context management. Nearly flawless execution of all Spite phases.
-*   **Cons:** Breaks the strict "local" cleanroom paradigm. Incurs API costs. Requires an active internet connection.
+- **Pros:** Industry-leading reasoning, coding, and context management. Nearly flawless execution of all Spite phases.
+- **Cons:** Breaks the strict "local" cleanroom paradigm. Incurs API costs. Requires an active internet connection.
 
 ### 2.2 Anthropic (Claude 3.5 Sonnet)
 
-*   **Pros:** Exceptional at coding, architectural design, and following complex system prompts. Often outperforms GPT-4o in specific coding tasks.
-*   **Cons:** Same as GPT-4o (privacy concerns, cost, requires internet).
+- **Pros:** Exceptional at coding, architectural design, and following complex system prompts. Often outperforms GPT-4o in specific coding tasks.
+- **Cons:** Same as GPT-4o (privacy concerns, cost, requires internet).
 
 ## Configuration
 

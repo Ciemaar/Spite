@@ -41,42 +41,42 @@ This document outlines the testing approach for the Spite clean-room implementat
 
 - **Goal:** Verify the end-to-end flow from receiving a GitHub URL to producing the Zip file, *without* relying on a live LLM.
 - **Setup:** Use a mocked GitHub client and a mocked LLM client.
-- **Execution:** Trigger the main Spite API endpoint for Phase 1.
-- **Assert:** The endpoint returns a `200 OK` and a valid `.zip` file download containing the mocked specifications.
+- **Execution:** Trigger the main application core logic for Phase 1, simulating UI signals.
+- **Assert:** The core logic emits the expected completion signal and provides the valid `.zip` payload ready for saving.
 
 ### 2.2 Full Phase 2 Pipeline (Git Generation)
 
 - **Goal:** Verify the end-to-end flow of generating the code and committing it to a local Git repository, *without* relying on a live LLM.
 - **Setup:** Use a mocked GitHub client and a mocked LLM client for *both* the "Dirty" and "Clean" agents.
-- **Execution:** Trigger the main Spite API endpoint for Phase 2. Simulate a Q&A interaction between the Clean and Dirty agent mocks.
+- **Execution:** Trigger the main application core logic for Phase 2, simulating UI signals. Simulate a Q&A interaction between the Clean and Dirty agent mocks.
 - **Assert:**
   - The "Clean" agent mock is called with the output of the "Dirty" agent mock.
   - A new local directory is created.
   - The mocked generated code files (including `CLEAN_BIBLIOGRAPHY.md` and `CLEAN_DIRTY_QA_LOG.md`) are written to this directory.
   - The directory is a valid Git repository with a commit containing the new files.
-  - The endpoint returns the path to this directory.
+  - The core logic emits the expected success signal containing the path to this directory.
 
 ### 2.3 Full Phase 3 Pipeline (Enhanced Git Generation)
 
 - **Goal:** Verify the end-to-end flow of generating the code, applying improvements, and committing to a local Git repository, *without* relying on a live LLM.
 - **Setup:** Use a mocked GitHub client and a mocked LLM client for *both* the "Dirty" and "Clean" agents.
-- **Execution:** Trigger the main Spite API endpoint for Phase 3.
+- **Execution:** Trigger the main application core logic for Phase 3, simulating UI signals.
 - **Assert:**
   - The "Clean" agent mock is called sequentially: first with the spec output, then with the `IMPROVEMENTS.md` output.
   - A new local directory is created and initial code is written and committed.
   - The mocked enhanced code files are written to the directory, resulting in subsequent commits.
   - The repository contains an updated `CLEAN_BIBLIOGRAPHY.md`.
-  - The endpoint returns the path to this directory.
+  - The core logic emits the expected success signal containing the path to this directory.
 
-## 3. Web UI (HTMX) Tests
+## 3. Desktop UI Tests
 
-### 3.1 Endpoint Validation (`test_web.py`)
+### 3.1 GUI Component Validation (`test_ui.py`)
 
-- **Target:** The FastAPI/Flask routes serving the HTMX frontend.
+- **Target:** The GUI classes and layout logic.
 - **Tests:**
-  - **GET `/`:** Assert it returns a 200 status code and contains the expected HTML form elements (URL input, supplemental URL input, AI provider select, Target Phase selector including Phase 3).
-  - **POST `/analyze` (HTMX submission):** Assert it returns the appropriate HTML fragment (e.g., a progress indicator or the next step in the UI) and starts the backend job.
-  - **SSE/Polling Endpoints:** Test that the endpoint responsible for streaming progress updates correctly yields Server-Sent Events or returns the expected JSON state.
+  - **Instantiation:** Assert the main window initializes without errors and contains the expected widgets (URL input, supplemental URL input, AI provider select, Target Phase selector including Phase 3).
+  - **Action Triggering:** Simulate clicking the submit button. Assert it emits the correct signal with the current values of the input fields and properly disables UI elements to prevent double submission.
+  - **Signal Handling:** Test that the UI responds correctly to mocked signals from background threads (e.g., updating progress bars, showing error dialogs, or showing the file save dialog upon success).
 
 ## 4. Manual "Clean-Room" Verification (The Real Test)
 

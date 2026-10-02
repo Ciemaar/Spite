@@ -56,7 +56,7 @@ The system should support a workflow where I can review the output of Phase 1 an
 #### Phase 1: Zip Archive
 
 - Package the generated markdown files (`REQUIREMENTS.md`, `TESTING.md`, `IMPLEMENTATION_PLAN.md`, `AGENT_INSTRUCTIONS.md`, `IMPROVEMENTS.md`, `DIRTY_BIBLIOGRAPHY.md`, `SYSTEM_OVERVIEW.md`, `SOURCE_EXCLUDES.txt`) into a structured `.zip` archive.
-- Provide the zip file for download via the web interface.
+- Provide the zip file for saving via a desktop file dialog.
 
 #### Phase 2: Local Git Working Directory
 
@@ -82,16 +82,16 @@ The system should support a workflow where I can review the output of Phase 1 an
 - **Ollama (Primary):** Integrate with a locally running Ollama instance via its REST API. Allow the user to specify the model name (e.g., `llama3`, `qwen2.5-coder`).
 - **Cloud Providers (Secondary):** Support user-provided API keys for OpenAI (GPT-4o) and Anthropic (Claude 3.5 Sonnet) as fallback or premium options.
 
-### 4.4 Web Interface (HTMX + Python Backend)
+### 4.4 Desktop Interface (Python GUI)
 
-- **Backend:** A lightweight Python web framework (e.g., FastAPI or Flask).
-- **Frontend:** A clean, professional, fast UI built with HTMX and Tailwind CSS (or similar minimal CSS framework).
+- **Core App:** The main logic loop running independent of the UI thread.
+- **GUI Frontend:** A clean, professional UI built with a Python GUI framework (e.g., PyQt6, PySide6, or CustomTkinter).
 - **Features:**
   - Form to input the Target URL (GitHub).
   - Input field for a list of supplemental URLs (public documentation, discussion forums) and a checkbox to enable automated web search (enabled by default).
   - Configuration section for AI Provider (Ollama model selection or API key input).
   - Selector (radio buttons or dropdown) for Target Phase (Phase 1: Zip, Phase 2: Full Git Repo, or Phase 3: Enhanced Git Repo), with UI support to progressively move between phases.
-  - Real-time progress indicators (using HTMX SSE or WebSockets) detailing the current step: "Fetching Repo", "Analyzing Public API", "Generating Specs", "Zipping...", "Implementing Code...", or "Applying Improvements...".
+  - Real-time progress indicators (using GUI progress bars and background thread signals) detailing the current step: "Fetching Repo", "Analyzing Public API", "Generating Specs", "Zipping...", "Implementing Code...", or "Applying Improvements...".
 
 ## 5. Ecosystem Expansion Roadmap
 
@@ -111,10 +111,10 @@ While the MVP focuses on GitHub repository URLs, the architecture must support f
 
 ```mermaid
 graph TD
-    UI[Web UI HTMX] --> API[Python Backend]
-    API --> Config[Config: Ollama/Keys]
+    UI[Desktop GUI] --> Core[Application Core]
+    Core --> Config[Config: Ollama/Keys]
 
-    API --> Ingest[Ingestion Module]
+    Core --> Ingest[Ingestion Module]
     Ingest --> Fetch[Fetch GitHub Repo]
     Fetch --> Filter[Filter: Keep Docs/Types, Drop Impl]
 

@@ -12,5 +12,5 @@ Spite is a clean-room software recreation tool. It takes a GitHub repository and
 
 1. Ensure `uv` is installed.
 1. Install dependencies: `uv sync`
-1. Run the development server: `uv run uvicorn spite.main:app --reload`
+1. Run the application: `uv run python -m spite.main`
 1. Make sure you have Ollama running locally.
