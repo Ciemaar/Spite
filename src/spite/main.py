@@ -119,20 +119,18 @@ async def download_specs(download_id: str):
 
 @app.post("/process", response_model=None)
 async def process(
+    github_url: Annotated[str, Form()],
     ai_provider: Annotated[str, Form()],
     ai_model: Annotated[str, Form()],
     target_phase: Annotated[str, Form()],
     client_id: Annotated[str, Form()],
-    target_mode: Annotated[str, Form()] = "repo",
-    github_url: Annotated[str, Form()] = "",
-    public_description: Annotated[str, Form()] = "",
     supplemental_urls: Annotated[str, Form()] = "",
     web_search: Annotated[bool, Form()] = False,
     additional_instructions: Annotated[str, Form()] = "",
 ) -> StreamingResponse | HTMLResponse:
     """Handle the main form submission via HTMX."""
     logger.info(
-        f"Processing mode: {target_mode}, repo: {github_url}, phase: {target_phase}, model: {ai_model}, client: {client_id}"
+        f"Processing repo: {github_url}, phase: {target_phase}, model: {ai_model}, client: {client_id}"
     )
     if client_id not in global_streams:
         global_streams[client_id] = ProgressStream()
@@ -140,54 +138,25 @@ async def process(
 
     from .analyzer import DirtyAgent
     from .ingest import IngestionManager
-    from .llm import LLMInterface
+    from .llm import configure_dspy
     from .packager import create_zip_payload
 
     # Setup
     ingestor = IngestionManager()
-    llm = LLMInterface(host=settings.ollama_host, model=ai_model)
-    dirty_agent = DirtyAgent(llm=llm)
+    configure_dspy(host=settings.ollama_host, model=ai_model)
+    dirty_agent = DirtyAgent()
 
     try:
         await stream.add_message("<div>Starting ingestion...</div>")
         # Ingestion
-        repo_files = {}
-        if target_mode == "repo":
-            if not github_url:
-                return HTMLResponse(
-                    "GitHub URL is required for repo mode.", status_code=400
-                )
-            repo_files = await ingestor.ingest_github_repo(github_url)
+        repo_files = await ingestor.ingest_github_repo(github_url)
 
         urls_to_fetch = [u.strip() for u in supplemental_urls.split(",") if u.strip()]
-
-        desc_is_url = False
-        if target_mode == "description":
-            if not public_description:
-                return HTMLResponse(
-                    "Public description is required for description mode.",
-                    status_code=400,
-                )
-            if (
-                public_description.strip().startswith(("http://", "https://"))
-                and "\n" not in public_description.strip()
-            ):
-                urls_to_fetch.append(public_description.strip())
-                desc_is_url = True
-
         supplemental_content = await ingestor.fetch_urls(urls_to_fetch)
-
-        if target_mode == "description" and not desc_is_url:
-            supplemental_content["Public Description"] = public_description
 
         search_context = ""
         if web_search:
-            search_query = (
-                f"{github_url} documentation"
-                if target_mode == "repo"
-                else "documentation"
-            )
-            search_context = ingestor.search_web(search_query)
+            search_context = ingestor.search_web(f"{github_url} documentation")
 
         await stream.add_message(
             "<div>Analyzing codebase and generating specifications...</div>"
@@ -235,7 +204,6 @@ async def process(
                     <input type="hidden" name="ai_provider" value="{ai_provider}">
                     <input type="hidden" name="ai_model" value="{ai_model}">
                     <input type="hidden" name="download_id" value="{download_id}">
-                    <input type="hidden" name="client_id" value="{client_id}">
                     <button type="submit">Proceed to Phase 2 (Local Implementation)</button>
                 </form>
             </article>
@@ -251,7 +219,7 @@ async def process(
 
         repo_path = init_local_repo()
         clean_agent = CleanAgent(
-            llm=llm, dirty_agent=dirty_agent, max_turns=settings.max_qa_turns
+            dirty_agent=dirty_agent, max_turns=settings.max_qa_turns
         )
 
         await clean_agent.generate_codebase(specs, repo_path)
@@ -328,11 +296,11 @@ async def process(
 
 @app.post("/process_phase2", response_model=None)
 async def process_phase2(
+    github_url: Annotated[str, Form()],
     ai_provider: Annotated[str, Form()],
     ai_model: Annotated[str, Form()],
     download_id: Annotated[str, Form()],
     client_id: Annotated[str, Form()],
-    github_url: Annotated[str, Form()] = "",
 ) -> HTMLResponse:
     """Handle continuation from phase 1 to phase 2."""
     import subprocess
@@ -340,15 +308,15 @@ async def process_phase2(
 
     from .analyzer import DirtyAgent
     from .generator import CleanAgent
-    from .llm import LLMInterface
+    from .llm import configure_dspy
     from .packager import init_local_repo
 
     if client_id not in global_streams:
         global_streams[client_id] = ProgressStream()
     stream = global_streams[client_id]
 
-    llm = LLMInterface(host=settings.ollama_host, model=ai_model)
-    dirty_agent = DirtyAgent(llm=llm)
+    configure_dspy(host=settings.ollama_host, model=ai_model)
+    dirty_agent = DirtyAgent()
 
     try:
         base_dir = Path("data/downloads").resolve()
@@ -367,7 +335,7 @@ async def process_phase2(
         await stream.add_message("<div>Starting clean-room implementation...</div>")
         repo_path = init_local_repo()
         clean_agent = CleanAgent(
-            llm=llm, dirty_agent=dirty_agent, max_turns=settings.max_qa_turns
+            dirty_agent=dirty_agent, max_turns=settings.max_qa_turns
         )
 
         await clean_agent.generate_codebase(specs, repo_path)
@@ -423,14 +391,14 @@ async def process_phase3(
 
     from .analyzer import DirtyAgent
     from .generator import CleanAgent
-    from .llm import LLMInterface
+    from .llm import configure_dspy
 
     if client_id not in global_streams:
         global_streams[client_id] = ProgressStream()
     stream = global_streams[client_id]
 
-    llm = LLMInterface(host=settings.ollama_host, model=ai_model)
-    dirty_agent = DirtyAgent(llm=llm)
+    configure_dspy(host=settings.ollama_host, model=ai_model)
+    dirty_agent = DirtyAgent()
 
     try:
         import tempfile
@@ -454,7 +422,7 @@ async def process_phase3(
 
         await stream.add_message("<div>Applying AI enhancements...</div>")
         clean_agent = CleanAgent(
-            llm=llm, dirty_agent=dirty_agent, max_turns=settings.max_qa_turns
+            dirty_agent=dirty_agent, max_turns=settings.max_qa_turns
         )
 
         await clean_agent.apply_improvements(specs, Path(repo_path))
