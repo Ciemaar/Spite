@@ -1,6 +1,6 @@
-import logging
+lazy import logging
 
-import uvicorn
+lazy import uvicorn
 
 
 def main() -> None:

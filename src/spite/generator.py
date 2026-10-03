@@ -1,9 +1,9 @@
-import logging
-import re
-from pathlib import Path
-from typing import TYPE_CHECKING
+lazy import logging
+lazy import re
+lazy from pathlib import Path
+lazy from typing import TYPE_CHECKING
 
-from .llm import LLMInterface
+lazy from .llm import LLMInterface
 
 if TYPE_CHECKING:
     from .analyzer import DirtyAgent

@@ -1,6 +1,6 @@
-import zipfile
+lazy import zipfile
 
-from spite.packager import create_zip_payload, init_local_repo
+lazy from spite.packager import create_zip_payload, init_local_repo
 
 
 def test_create_zip_payload():

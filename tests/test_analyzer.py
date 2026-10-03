@@ -1,5 +1,5 @@
-from spite.analyzer import DirtyAgent
-from spite.llm import LLMInterface
+lazy from spite.analyzer import DirtyAgent
+lazy from spite.llm import LLMInterface
 
 
 def test_parse_files():

@@ -1,9 +1,9 @@
-import os
+lazy import os
 
-import pytest
-from fastapi.testclient import TestClient
+lazy import pytest
+lazy from fastapi.testclient import TestClient
 
-from spite.main import app
+lazy from spite.main import app
 
 client = TestClient(app)
 
