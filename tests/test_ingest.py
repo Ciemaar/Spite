@@ -1,4 +1,4 @@
-from spite.ingest import IngestionManager
+lazy from spite.ingest import IngestionManager
 
 
 def test_is_allowed_file():

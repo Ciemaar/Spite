@@ -1,9 +1,9 @@
-import io
-import logging
-import subprocess
-import tempfile
-import zipfile
-from pathlib import Path
+lazy import io
+lazy import logging
+lazy import subprocess
+lazy import tempfile
+lazy import zipfile
+lazy from pathlib import Path
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,5 @@
-import asyncio
-from collections.abc import AsyncGenerator
+lazy import asyncio
+lazy from collections.abc import AsyncGenerator
 
 
 class ProgressStream:
