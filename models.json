@@ -20,6 +20,11 @@
       "id": "qwopus-3.5-coder-4b",
       "name": "Qwopus-3.5-Coder (4B)",
       "description": "Safe bet for coding. Fast and leaves headroom for larger context."
+    },
+    {
+      "id": "minimax-m2.7",
+      "name": "Minimax-m2.7",
+      "description": "Alternative fast and lightweight model option for constrained environments."
     }
   ]
 }

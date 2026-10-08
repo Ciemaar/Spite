@@ -11,4 +11,7 @@ ollama pull llama3
 echo "Pulling qwen2.5-coder..."
 ollama pull qwen2.5-coder
 
+echo "Pulling minimax-m2.7..."
+ollama pull minimax-m2.7
+
 echo "Successfully pulled recommended models."
