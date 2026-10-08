@@ -31,11 +31,11 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y libxml2-dev libxslt1-dev
 
     - name: Install dependencies
-      run: uv sync --all-extras --dev --python /usr/bin/python3.15
+      run: PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1 uv sync --all-extras --dev --python /usr/bin/python3.15
       env:
         PYO3_USE_ABI3_FORWARD_COMPATIBILITY: 1
 
     - name: Run checks via tox
-      run: uv run tox -e ${{ matrix.tox-env }}
+      run: PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1 uv run tox -e ${{ matrix.tox-env }}
       env:
         PYO3_USE_ABI3_FORWARD_COMPATIBILITY: 1
