@@ -1,17 +1,17 @@
-import functools
-import json
-import logging
-from pathlib import Path
-from typing import Annotated
+lazy import functools
+lazy import json
+lazy import logging
+lazy from pathlib import Path
+lazy from typing import Annotated
 
-from fastapi import FastAPI, Form, Request
-from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
-from pydantic_settings import BaseSettings, SettingsConfigDict
+lazy from fastapi import FastAPI, Form, Request
+lazy from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
+lazy from fastapi.staticfiles import StaticFiles
+lazy from fastapi.templating import Jinja2Templates
+lazy from pydantic import BaseModel
+lazy from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from spite.stream import ProgressStream  # type: ignore
+lazy from spite.stream import ProgressStream  # type: ignore
 
 # Global dict to store active streams (in a real app, use Redis/pubsub)
 global_streams: dict[str, ProgressStream] = {}

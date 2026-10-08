@@ -12,13 +12,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.14", "3.15"]
+        python-version: ["3.15"]
         include:
-          - python-version: "3.14"
-            tox-env: "py314"
           - python-version: "3.15"
             tox-env: "py315"
-            continue-on-error: true
 
     steps:
     - uses: actions/checkout@v4
@@ -27,15 +24,17 @@ jobs:
       uses: astral-sh/setup-uv@v5
 
     - name: Set up Python
-      run: uv python install --preview ${{ matrix.python-version }}
+      run: sudo add-apt-repository -y ppa:deadsnakes/nightly && sudo apt-get update && sudo apt-get install -y python3.15 python3.15-dev python3.15-venv
 
     - name: Install System Dependencies for source builds
       run: sudo apt-get update && sudo apt-get install -y libxml2-dev libxslt1-dev
 
     - name: Install dependencies
-      continue-on-error: ${{ matrix.continue-on-error || false }}
-      run: PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1 uv sync --all-extras --dev --python ${{ matrix.python-version }}
+      run: PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1 uv sync --all-extras --dev --python /usr/bin/python3.15
+      env:
+        PYO3_USE_ABI3_FORWARD_COMPATIBILITY: 1
 
     - name: Run checks via tox
-      continue-on-error: ${{ matrix.continue-on-error || false }}
-      run: uv run tox -e ${{ matrix.tox-env }}
+      run: PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1 uv run tox -e ${{ matrix.tox-env }}
+      env:
+        PYO3_USE_ABI3_FORWARD_COMPATIBILITY: 1

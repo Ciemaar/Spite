@@ -1,10 +1,10 @@
-import base64
-import logging
-from pathlib import Path
-from urllib.parse import urlparse
+lazy import base64
+lazy import logging
+lazy from pathlib import Path
+lazy from urllib.parse import urlparse
 
-import httpx
-from duckduckgo_search import DDGS
+lazy import httpx
+lazy from duckduckgo_search import DDGS
 
 logger = logging.getLogger(__name__)
 

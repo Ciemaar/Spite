@@ -1,7 +1,7 @@
-import logging
-from typing import Any
+lazy import logging
+lazy from typing import Any
 
-from ollama import AsyncClient, Message
+lazy from ollama import AsyncClient, Message
 
 logger = logging.getLogger(__name__)
 

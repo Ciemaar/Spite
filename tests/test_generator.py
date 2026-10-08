@@ -1,10 +1,10 @@
-import tempfile
-from pathlib import Path
-from unittest.mock import MagicMock
+lazy import tempfile
+lazy from pathlib import Path
+lazy from unittest.mock import MagicMock
 
-from spite.analyzer import DirtyAgent
-from spite.generator import CleanAgent
-from spite.llm import LLMInterface
+lazy from spite.analyzer import DirtyAgent
+lazy from spite.generator import CleanAgent
+lazy from spite.llm import LLMInterface
 
 
 def test_parse_files():

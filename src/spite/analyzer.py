@@ -1,7 +1,7 @@
-import logging
-import re
+lazy import logging
+lazy import re
 
-from .llm import LLMInterface
+lazy from .llm import LLMInterface
 
 logger = logging.getLogger(__name__)
 
